@@ -1,0 +1,19 @@
+<?php
+$MESS["SALE_PAYSELECTION"] = "Payselection";
+$MESS["SALE_PAYSELECTION_CONNECT_SETTINGS"] = "Параметры подключения Payselection";
+$MESS["SALE_PAYSELECTION_ID_DESC"] = "Идентификатор магазина";
+$MESS["SALE_PAYSELECTION_SECRET_KEY"] = "Секретный ключ магазина";
+$MESS["SALE_PAYSELECTION_CHECKOUT_API_URL"] = "URL, API Платежного шлюза";
+$MESS["SALE_PAYSELECTION_PAYMENT_DESCRIPTION"] = "Описание заказа";
+$MESS["SALE_PAYSELECTION_PAYMENT_DESCRIPTION_DESC"] = "Текст может содержать метки: #PAYMENT_ID# - ID оплаты, #ORDER_ID# - ID заказа, #PAYMENT_NUMBER# - номер оплаты, #ORDER_NUMBER# - номер заказа, #USER_EMAIL# - Email покупателя";
+$MESS["SALE_PAYSELECTION_PAYMENT_DESCRIPTION_TEMPLATE"] = "Оплата №#PAYMENT_NUMBER# заказа №#ORDER_NUMBER# для #USER_EMAIL#";
+$MESS["SALE_PAYSELECTION_NOTIFICATION_URL"] = "URL, на который будут приходить уведомления";
+$MESS["SALE_PAYSELECTION_SUCCESS_URL"] = "URL, на который будет перенаправлен клиент при успешной транзакции";
+$MESS["SALE_PAYSELECTION_SUCCESS_URL_DESC"] = "Оставьте пустым для автоматического определения адреса, клиент вернется на страницу с которой был выполнен переход на оплату";
+$MESS["SALE_PAYSELECTION_DECLINE_URL"] = "URL, на который будет перенаправлен клиент при отклоненной банком транзакции";
+$MESS["SALE_PAYSELECTION_DECLINE_URL_DESC"] = "Оставьте пустым для автоматического определения адреса, клиент вернется на страницу с которой был выполнен переход на оплату";
+$MESS["SALE_PAYSELECTION_FAIL_URL"] = "URL, на который будет перенаправлен клиент при неудавшейся транзакции";
+$MESS["SALE_PAYSELECTION_FAIL_URL_DESC"] = "Оставьте пустым для автоматического определения адреса, клиент вернется на страницу с которой был выполнен переход на оплату";
+$MESS["SALE_PAYSELECTION_CANCEL_URL"] = "URL, на который будет перенаправлен клиент в случае отмены операции";
+$MESS["SALE_PAYSELECTION_CANCEL_URL_DESC"] = "Оставьте пустым для автоматического определения адреса, клиент вернется на страницу с которой был выполнен переход на оплату";
+$MESS["SALE_PAYSELECTION_CHANGE_STATUS_PAY"] = "Автоматически оплачивать заказ при получении успешного статуса оплаты";

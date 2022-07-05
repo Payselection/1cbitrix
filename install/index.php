@@ -1,0 +1,67 @@
+<?php
+
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages(__FILE__);
+
+class payselection_payment extends CModule
+{
+
+    var $MODULE_ID = "payselection.payment";
+    public $MODULE_VERSION;
+    public $MODULE_VERSION_DATE;
+    public $MODULE_NAME;
+    public $MODULE_DESCRIPTION;
+    public $MODULE_GROUP_RIGHTS = "Y";
+
+    function __construct()
+    {
+        $arModuleVersion = array();
+        include(dirname(__FILE__) . "/version.php");
+
+        if (is_array($arModuleVersion) && array_key_exists("VERSION", $arModuleVersion)) {
+            $this->MODULE_VERSION = $arModuleVersion["VERSION"];
+            $this->MODULE_VERSION_DATE = $arModuleVersion["VERSION_DATE"];
+        }
+
+        $this->MODULE_NAME = Loc::getMessage("MODULE_PAYSELECTION_NAME");
+        $this->MODULE_DESCRIPTION = Loc::getMessage("MODULE_PAYSELECTION_DESCRIPTION");
+        $this->PARTNER_NAME = Loc::getMessage("MODULE_PAYSELECTION_PARTNER_NAME");
+        $this->PARTNER_URI = Loc::getMessage("MODULE_PAYSELECTION_PARTNER_URI");
+
+        $ps_dir_path = strlen(COption::GetOptionString('sale', 'path2user_ps_files')) > 3 ? COption::GetOptionString('sale', 'path2user_ps_files') : '/bitrix/php_interface/include/sale_payment/';
+        $this->PAYMENT_HANDLER_PATH = $_SERVER["DOCUMENT_ROOT"] . $ps_dir_path . str_replace(".", "_", $this->MODULE_ID) . "/";
+    }
+
+    public function DoInstall()
+    {
+        $this->installFiles();
+        \Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
+        return true;
+    }
+
+    public function DoUninstall()
+    {
+        $this->uninstallFiles();
+        \Bitrix\Main\Config\Option::delete($this->MODULE_ID);
+        \Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
+        return true;
+    }
+
+    public function installFiles()
+    {
+        CopyDirFiles($this->MODULE_PATH . "/install/setup/images/logo", $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/sale/sale_payments/');
+        CopyDirFiles(
+            $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $this->MODULE_ID . "/install/setup/handler",
+            $this->PAYMENT_HANDLER_PATH,
+            true, true
+        );
+        return true;
+    }
+
+    public function uninstallFiles()
+    {
+        DeleteDirFilesEx("/bitrix/php_interface/include/sale_payment/payselection_payment");
+        return true;
+    }
+}
