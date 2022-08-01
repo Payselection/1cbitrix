@@ -50,7 +50,10 @@ class payselection_payment extends CModule
 
     public function installFiles()
     {
-        CopyDirFiles($this->MODULE_PATH . "/install/setup/images/logo", $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/sale/sale_payments/');
+        CopyDirFiles(
+            $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . "/install/setup/images/logo",
+            $_SERVER['DOCUMENT_ROOT'] . '/bitrix/images/sale/sale_payments/'
+        );
         CopyDirFiles(
             $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $this->MODULE_ID . "/install/setup/handler",
             $this->PAYMENT_HANDLER_PATH,

@@ -18,7 +18,7 @@ $data = [
 	'SORT' => 100,
 	'CODES' => [
 		'PAYSELECTION_SITE_ID' => [
-			'NAME' => 'ID',
+			'NAME' => 'SITE-ID',
 			'DESCRIPTION' => Loc::getMessage('SALE_PAYSELECTION_ID_DESC'),
 			'SORT' => 100,
 			'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
@@ -34,13 +34,31 @@ $data = [
             'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
             'DEFAULT' => [
                 'PROVIDER_KEY' => 'VALUE',
+                'PROVIDER_VALUE' => 'https://webform.payselection.com',
+            ],
+        ],
+        'PAYSELECTION_GATEWAY_API_URL' => [
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_GATEWAY_API_URL'),
+            'SORT' => 400,
+            'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
+            'DEFAULT' => [
+                'PROVIDER_KEY' => 'VALUE',
                 'PROVIDER_VALUE' => 'https://gw.payselection.com',
+            ],
+        ],
+        'PAYSELECTION_WIDGET_API_URL' => [
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_WIDGET_API_URL'),
+            'SORT' => 500,
+            'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
+            'DEFAULT' => [
+                'PROVIDER_KEY' => 'VALUE',
+                'PROVIDER_VALUE' => 'https://widget.payselection.com/lib/pay-widget.js',
             ],
         ],
 		'PAYSELECTION_PAYMENT_DESCRIPTION' => [
 			'NAME' => Loc::getMessage('SALE_PAYSELECTION_PAYMENT_DESCRIPTION'),
 			'DESCRIPTION' => Loc::getMessage('SALE_PAYSELECTION_PAYMENT_DESCRIPTION_DESC'),
-			'SORT' => 400,
+			'SORT' => 600,
 			'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
 			'DEFAULT' => [
 				'PROVIDER_KEY' => 'VALUE',
@@ -49,7 +67,7 @@ $data = [
 		],
 		'PAYSELECTION_NOTIFICATION_URL' => [
 			'NAME' => Loc::getMessage('SALE_PAYSELECTION_NOTIFICATION_URL'),
-			'SORT' => 500,
+			'SORT' => 700,
 			'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
 			'DEFAULT' => [
 				'PROVIDER_KEY' => 'VALUE',
@@ -59,25 +77,25 @@ $data = [
 		'PAYSELECTION_SUCCESS_URL' => [
 			'NAME' => Loc::getMessage('SALE_PAYSELECTION_SUCCESS_URL'),
 			'DESCRIPTION' => Loc::getMessage('SALE_PAYSELECTION_SUCCESS_URL_DESC'),
-			'SORT' => 600,
+			'SORT' => 800,
 			'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
 		],
 		'PAYSELECTION_DECLINE_URL' => [
 			'NAME' => Loc::getMessage('SALE_PAYSELECTION_DECLINE_URL'),
 			'DESCRIPTION' => Loc::getMessage('SALE_PAYSELECTION_DECLINE_URL_DESC'),
-			'SORT' => 700,
+			'SORT' => 900,
 			'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
 		],
 		'PAYSELECTION_FAIL_URL' => [
 			'NAME' => Loc::getMessage('SALE_PAYSELECTION_FAIL_URL'),
 			'DESCRIPTION' => Loc::getMessage('SALE_PAYSELECTION_FAIL_URL_DESC'),
-			'SORT' => 800,
+			'SORT' => 1000,
 			'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
 		],
 		'PAYSELECTION_CANCEL_URL' => [
 			'NAME' => Loc::getMessage('SALE_PAYSELECTION_CANCEL_URL'),
 			'DESCRIPTION' => Loc::getMessage('SALE_PAYSELECTION_CANCEL_URL_DESC'),
-			'SORT' => 900,
+			'SORT' => 1100,
 			'GROUP' => 'SALE_PAYSELECTION_CONNECT_SETTINGS',
 		],
 	]

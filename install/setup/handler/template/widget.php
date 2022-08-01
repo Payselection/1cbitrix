@@ -22,10 +22,47 @@ $sum = round($params['sum'], 2);
 	<p><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_WIDGET_WARNING_RETURN') ?></p>
 </div>
 
-<script type="text/javascript" src="https://web3test.testpaygate.com/widget/pay-widget.js"></script>
+<script src="<?= CUtil::JSEscape($params['WidgetUrl']) ?>"></script>
 <script type="text/javascript">
-	<?php include_once 'widget.js' ?>
-	BX.ready(function() {
+    this.pay = function() {
+        let widget = new pw.PayWidget();
+        widget.pay(
+            "<?= CUtil::JSEscape($params['ServiceId']) ?>",
+            {
+                MetaData: {
+                    PaymentType: "Pay",
+                },
+                PaymentRequest: {
+                    OrderId: "<?= CUtil::JSEscape($params['PaymentRequest']['OrderId']) ?>",
+                    Amount: "<?= CUtil::JSEscape($params['PaymentRequest']['Amount']) ?>",
+                    Currency: "<?= CUtil::JSEscape($params['PaymentRequest']['Currency']) ?>",
+                    Description: "<?= CUtil::JSEscape($params['PaymentRequest']['Description']) ?>",
+                    ExtraData: {
+                        WebhookUrl: "<?= CUtil::JSEscape($params['PaymentRequest']['ExtraData']['WebhookUrl']) ?>",
+                    },
+                },
+            },
+            {
+                onSuccess: function(res) {
+                    console.log("onSuccess from shop", res);
+                    window.location.reload();
+                },
+                onError: function(res) {
+                    console.log("onFail from shop", res);
+                },
+                onClose: function(res) {
+                    console.log("onClose from shop", res);
+                    window.location.reload();
+                },
+            },
+        );
+    };
 
-	});
+    var a = document.getElementById('paysystem-button-pay');
+    if (a) {
+        a.onclick = function (e) {
+            e.preventDefault();
+            pay();
+        }
+    }
 </script>

@@ -65,11 +65,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
         }
 
         $createPaymentTokenData = $createPaymentTokenResult->getData();
-//		if (!empty($createPaymentTokenData['checkout']['token']))
-//		{
-//			$result->setPsData(['PS_INVOICE_ID' => $createPaymentTokenData['checkout']['token']]);
-//		}
-//
+
         if ($this->isCheckoutMode()) {
             $result->setPaymentUrl($createPaymentTokenData['redirect_url']);
         }
@@ -107,32 +103,32 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
      */
     private function getTemplateParams(Payment $payment, array $paymentTokenData): array
     {
-        $params = [
-            'sum' => (string)(PriceMaths::roundPrecision($payment->getSum())),
-            'currency' => $payment->getField('CURRENCY'),
-        ];
-
         if ($this->isWidgetMode()) {
-//            $params['checkout_url'] = self::CHECKOUT_API_URL;
-            $params['token'] = $paymentTokenData['checkout']['token'];
-            $params['checkout'] = [
-                'iframe' => true,
-                'order' => [
-                    'amount' => (string)(PriceMaths::roundPrecision($payment->getSum()) * 100),
-                    'currency' => $payment->getField('CURRENCY'),
-                    'description' => $this->getPaymentDescription($payment),
-                    'tracking_id' => $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID'),
+            $params = [
+                'ServiceId' => $this->getBusinessValue($payment, 'PAYSELECTION_SITE_ID'),
+                'WidgetUrl' => $this->getBusinessValue($payment, 'PAYSELECTION_WIDGET_API_URL'),
+                'PaymentRequest' => [
+                    'Amount' => (string)($payment->getSum()),
+                    'Currency' => $payment->getField('CURRENCY'),
+                    'Description' => $this->getPaymentDescription($payment),
+                    'OrderId' => $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID'),
+                    'ExtraData' => [
+                        'WebhookUrl' => $this->getNotificationUrl($payment),
+                        'SuccessUrl' => $this->getSuccessUrl($payment),
+                        'DeclineUrl' => $this->getDeclineUrl($payment),
+                        'FailUrl' => $this->getFailUrl($payment),
+                        'CancelUrl' => $this->getCancelUrl($payment),
+                    ],
                 ],
-                'settings' => [
-                    'success_url' => $this->getSuccessUrl($payment),
-                    'decline_url' => $this->getDeclineUrl($payment),
-                    'notification_url' => $this->getBusinessValue($payment, 'PAYSELECTION_NOTIFICATION_URL'),
-                    'language' => LANGUAGE_ID,
+                'CustomerInfo' => [
+                    'Language' => LANGUAGE_ID,
                 ],
             ];
         } else {
             $params['url'] = $paymentTokenData['redirect_url'];
         }
+        $params['sum'] = (string)(PriceMaths::roundPrecision($payment->getSum()));
+        $params['currency'] = $payment->getField('CURRENCY');
 
         return $params;
     }
@@ -154,7 +150,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
         $params = [
             'MetaData' => [
                 'PaymentType' => 'Pay',
-                'Initiator' => 'Widget',
+//                'Initiator' => 'Widget',
             ],
             'PaymentRequest' => [
                 'Amount' => (string)($payment->getSum()),
@@ -164,11 +160,11 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
                 'RebillFlag' => false,
                 'OrderId' => $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID'),
                 'ExtraData' => [
-//                    'ReturnURL' => 'http://extra.return',
-                    'success_url' => $this->getSuccessUrl($payment),
-                    'decline_url' => $this->getDeclineUrl($payment),
-                    'fail_url' => $this->getFailUrl($payment),
-                    'cancel_url' => $this->getCancelUrl($payment),
+                    'WebhookUrl' => $this->getNotificationUrl($payment),
+                    'SuccessUrl' => $this->getSuccessUrl($payment),
+                    'DeclineUrl' => $this->getDeclineUrl($payment),
+                    'FailUrl' => $this->getFailUrl($payment),
+                    'CancelUrl' => $this->getCancelUrl($payment),
                 ],
             ],
             'CustomerInfo' => [
@@ -181,17 +177,6 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
         $sendResult = $this->sendCreate(self::SEND_METHOD_HTTP_POST, $url, $postData, $headers);
         if ($sendResult->isSuccess()) {
             $result->setData($sendResult->getData());
-//			$paymentTokenData = $sendResult->getData();
-//          $result->setData($paymentTokenData);
-//			$verifyResponseResult = $this->verifyResponse($paymentTokenData);
-//			if ($verifyResponseResult->isSuccess())
-//			{
-//				$result->setData($paymentTokenData);
-//			}
-//			else
-//			{
-//				$result->addErrors($verifyResponseResult->getErrors());
-//			}
         } else {
             $result->addErrors($sendResult->getErrors());
         }
@@ -214,16 +199,12 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
 
         $url = $this->getUrl($payment, 'getPaymentStatus');
         $headers = $this->getHeaders($payment);
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ':getPayselectionPayment url: ' . $url);
 
         $sendResult = $this->send(self::SEND_METHOD_HTTP_GET, $url, [], $headers);
         if ($sendResult->isSuccess()) {
             $paymentData = $sendResult->getData();
-            $verifyResponseResult = $this->verifyResponse($paymentData);
-            if ($verifyResponseResult->isSuccess()) {
-                $result->setData($paymentData);
-            } else {
-                $result->addErrors($verifyResponseResult->getErrors());
-            }
+            $result->setData($paymentData);
         } else {
             $result->addErrors($sendResult->getErrors());
         }
@@ -289,7 +270,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
     /**
      * @param string $method
      * @param string $url
-     * @param array $params
+     * @param string $postData
      * @param array $headers
      * @return ServiceResult
      * @throws Main\ArgumentException
@@ -345,13 +326,20 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
     {
         $result = new ServiceResult();
 
-        if (!empty($response['errors'])) {
+        if (!empty($response['errors']))
+        {
             $result->addError(PaySystem\Error::create($response['message']));
-        } elseif (!empty($response['response']['errors'])) {
+        }
+        elseif (!empty($response['response']['errors']))
+        {
             $result->addError(PaySystem\Error::create($response['response']['message']));
-        } elseif (!empty($response['response']['status']) && $response['response']['status'] === self::STATUS_ERROR_CODE) {
+        }
+        elseif (!empty($response['response']['status']) && $response['response']['status'] === self::STATUS_ERROR_CODE)
+        {
             $result->addError(PaySystem\Error::create($response['response']['message']));
-        } elseif (!empty($response['checkout']['status']) && $response['checkout']['status'] === self::STATUS_ERROR_CODE) {
+        }
+        elseif (!empty($response['checkout']['status']) && $response['checkout']['status'] === self::STATUS_ERROR_CODE)
+        {
             $result->addError(PaySystem\Error::create($response['checkout']['message']));
         }
 
@@ -375,32 +363,38 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
      * @throws Main\ArgumentOutOfRangeException
      * @throws Main\ArgumentTypeException
      * @throws Main\ObjectException
+     * @throws Main\NotImplementedException
      */
     public function processRequest(Payment $payment, Request $request): ServiceResult
     {
         $result = new ServiceResult();
 
         $inputStream = static::readFromStream();
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest input stream: ' . $inputStream);
         $data = static::decode($inputStream);
-        $transaction = $data['transaction'];
+        $payment->setField('PS_INVOICE_ID', $data['TransactionId']);
 
         $payselectionPaymentResult = $this->getPayselectionPayment($payment);
         if ($payselectionPaymentResult->isSuccess()) {
             $payselectionPaymentData = $payselectionPaymentResult->getData();
-            if ($payselectionPaymentData['checkout']['status'] === self::STATUS_SUCCESSFUL_CODE) {
+            PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest status: ' . $payselectionPaymentData);
+            if ($payselectionPaymentData['TransactionState'] === self::STATUS_SUCCESSFUL_CODE) {
                 $description = Loc::getMessage('SALE_PAYSELECTION_TRANSACTION', [
-                    '#ID#' => $transaction['uid'],
+                    '#ID#' => $data['TransactionId'],
                 ]);
+                PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest $description: ' . $description);
                 $fields = [
-                    'PS_STATUS_CODE' => $transaction['status'],
+                    'PS_STATUS_CODE' => $data['TransactionState'],
                     'PS_STATUS_DESCRIPTION' => $description,
-                    'PS_SUM' => $transaction['amount'] / 100,
+                    'PS_SUM' => $data['Amount'],
                     'PS_STATUS' => 'N',
-                    'PS_CURRENCY' => $transaction['currency'],
-                    'PS_RESPONSE_DATE' => new Main\Type\DateTime()
+                    'PS_CURRENCY' => $data['Currency'],
+                    'PS_RESPONSE_DATE' => new Main\Type\DateTime(),
+                    'PS_INVOICE_ID' => $data['TransactionId'],
+                    'PS_CARD_NUMBER' => $data['CardMasked'],
                 ];
 
-                if ($this->isSumCorrect($payment, $transaction['amount'] / 100)) {
+                if ($this->isSumCorrect($payment, $data['Amount'])) {
                     $fields['PS_STATUS'] = 'Y';
 
                     PaySystem\Logger::addDebugInfo(
@@ -422,7 +416,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
                     PaySystem\Error::create(
                         Loc::getMessage('SALE_PAYSELECTION_ERROR_STATUS',
                             [
-                                '#STATUS#' => $transaction['status'],
+                                '#STATUS#' => $data['TransactionState'],
                             ]
                         )
                     )
@@ -447,7 +441,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
     private function isSumCorrect(Payment $payment, $sum): bool
     {
         PaySystem\Logger::addDebugInfo(
-            __CLASS__ . ': sum=' . PriceMaths::roundPrecision($sum) . "; paymentSum=" . PriceMaths::roundPrecision($payment->getSum())
+            __CLASS__ . ': payselectionSum=' . PriceMaths::roundPrecision($sum) . "; paymentSum=" . PriceMaths::roundPrecision($payment->getSum())
         );
 
         return PriceMaths::roundPrecision($sum) === PriceMaths::roundPrecision($payment->getSum());
@@ -466,9 +460,8 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
             if ($data === false) {
                 return false;
             }
-
-            if (isset($data['transaction']['tracking_id'])) {
-                [, $trackingPaySystemId] = explode(self::TRACKING_ID_DELIMITER, $data['transaction']['tracking_id']);
+            if (isset($data['OrderId'])) {
+                [, $trackingPaySystemId] = explode(self::TRACKING_ID_DELIMITER, $data['OrderId']);
                 return (int)$trackingPaySystemId === (int)$paySystemId;
             }
         }
@@ -485,8 +478,8 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
         $inputStream = static::readFromStream();
         if ($inputStream) {
             $data = static::decode($inputStream);
-            if (isset($data['transaction']['tracking_id'])) {
-                [$trackingPaymentId] = explode(self::TRACKING_ID_DELIMITER, $data['transaction']['tracking_id']);
+            if (isset($data['OrderId'])) {
+                [$trackingPaymentId] = explode(self::TRACKING_ID_DELIMITER, $data['OrderId']);
                 return (int)$trackingPaymentId;
             }
         }
@@ -496,21 +489,21 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
 
     /**
      * @param Payment $payment
-     * @return mixed
+     * @return string
      * @throws Main\ArgumentException
      * @throws Main\ArgumentOutOfRangeException
      * @throws Main\NotImplementedException
      * @throws Main\ObjectPropertyException
      * @throws Main\SystemException
      */
-    private function getPaymentDescription(Payment $payment)
+    private function getPaymentDescription(Payment $payment): string
     {
         /** @var PaymentCollection $collection */
         $collection = $payment->getCollection();
         $order = $collection->getOrder();
         $userEmail = $order->getPropertyCollection()->getUserEmail();
 
-        $description = str_replace(
+        return str_replace(
             [
                 '#PAYMENT_NUMBER#',
                 '#ORDER_NUMBER#',
@@ -527,44 +520,51 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
             ],
             $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_DESCRIPTION')
         );
-
-        return $description;
     }
 
     /**
      * @param Payment $payment
-     * @return mixed|string
+     * @return string
      */
-    private function getSuccessUrl(Payment $payment)
+    private function getSuccessUrl(Payment $payment): string
     {
         return $this->getBusinessValue($payment, 'PAYSELECTION_SUCCESS_URL') ?: $this->service->getContext()->getUrl();
     }
 
     /**
      * @param Payment $payment
-     * @return mixed|string
+     * @return string
      */
-    private function getDeclineUrl(Payment $payment)
+    private function getDeclineUrl(Payment $payment): string
     {
         return $this->getBusinessValue($payment, 'PAYSELECTION_DECLINE_URL') ?: $this->service->getContext()->getUrl();
     }
 
     /**
      * @param Payment $payment
-     * @return mixed|string
+     * @return string
      */
-    private function getFailUrl(Payment $payment)
+    private function getFailUrl(Payment $payment): string
     {
         return $this->getBusinessValue($payment, 'PAYSELECTION_FAIL_URL') ?: $this->service->getContext()->getUrl();
     }
 
     /**
      * @param Payment $payment
-     * @return mixed|string
+     * @return string
      */
-    private function getCancelUrl(Payment $payment)
+    private function getCancelUrl(Payment $payment): string
     {
         return $this->getBusinessValue($payment, 'PAYSELECTION_CANCEL_URL') ?: $this->service->getContext()->getUrl();
+    }
+
+    /**
+     * @param Payment $payment
+     * @return string
+     */
+    private function getNotificationUrl(Payment $payment): string
+    {
+        return $this->getBusinessValue($payment, 'PAYSELECTION_NOTIFICATION_URL');
     }
 
     /**
@@ -572,7 +572,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
      * @param string $body
      * @return array
      */
-    private function getHeaders(Payment $payment, string $body): array
+    private function getHeaders(Payment $payment, string $body=''): array
     {
         $secretKey = $this->getBusinessValue($payment, 'PAYSELECTION_SECRET_KEY');
         return [
@@ -629,12 +629,12 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
      */
     protected function getUrl(Payment $payment = null, $action): string
     {
-        $host = $this->getBusinessValue($payment, 'PAYSELECTION_CHECKOUT_API_URL');
-        $url = $host . '/webpayments/create';
+        $url = '';
         if ($payment !== null && $action === 'getPaymentCreate') {
+            $host = $this->getBusinessValue($payment, 'PAYSELECTION_CHECKOUT_API_URL');
             $url = $host . '/webpayments/create';
-        }
-        if ($payment !== null && $action === 'getPaymentStatus') {
+        } else if ($payment !== null && $action === 'getPaymentStatus') {
+            $host = $this->getBusinessValue($payment, 'PAYSELECTION_GATEWAY_API_URL');
             $url = $host . '/transactions/#transaction_id#';
             $url = str_replace('#transaction_id#', $payment->getField('PS_INVOICE_ID'), $url);
         }
@@ -672,7 +672,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
      * @param string $data
      * @return mixed
      */
-    private static function decode($data)
+    private static function decode(string $data)
     {
         try {
             return Main\Web\Json::decode($data);
