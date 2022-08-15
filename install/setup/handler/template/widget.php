@@ -27,7 +27,10 @@ $sum = round($params['sum'], 2);
     this.pay = function() {
         let widget = new pw.PayWidget();
         widget.pay(
-            "<?= CUtil::JSEscape($params['ServiceId']) ?>",
+            {
+                serviceId: "<?= CUtil::JSEscape($params['ServiceId']) ?>",
+                key: "<?= CUtil::JSEscape($params['Key']) ?>",
+            },
             {
                 MetaData: {
                     PaymentType: "Pay",
@@ -41,6 +44,7 @@ $sum = round($params['sum'], 2);
                         WebhookUrl: "<?= CUtil::JSEscape($params['PaymentRequest']['ExtraData']['WebhookUrl']) ?>",
                     },
                 },
+                ReceiptData: JSON.parse("<?= CUtil::JSEscape(json_encode($params['ReceiptData'])) ?>"),
             },
             {
                 onSuccess: function(res) {
@@ -49,6 +53,7 @@ $sum = round($params['sum'], 2);
                 },
                 onError: function(res) {
                     console.log("onFail from shop", res);
+                    window.location.reload();
                 },
                 onClose: function(res) {
                     console.log("onClose from shop", res);

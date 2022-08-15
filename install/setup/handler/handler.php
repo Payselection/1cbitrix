@@ -5,10 +5,13 @@ namespace Sale\Handlers\PaySystem;
 use Bitrix\Main,
     Bitrix\Main\Web\HttpClient,
     Bitrix\Main\Localization\Loc,
+    Bitrix\Main\Type\DateTime,
     Bitrix\Sale,
     Bitrix\Sale\PaySystem,
     Bitrix\Main\Request,
     Bitrix\Sale\Payment,
+    Bitrix\Sale\Order,
+    Bitrix\Sale\Cashbox,
     Bitrix\Sale\PaySystem\ServiceResult,
     Bitrix\Sale\PaymentCollection,
     Bitrix\Sale\PriceMaths;
@@ -21,6 +24,8 @@ Loc::loadMessages(__FILE__);
  */
 class payselection_paymentHandler extends PaySystem\ServiceHandler
 {
+    use PaySystem\Cashbox\CheckTrait;
+
     private const MODE_CHECKOUT = 'checkout';
     private const MODE_WIDGET = 'widget';
 
@@ -58,19 +63,22 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
     {
         $result = new ServiceResult();
 
-        $createPaymentTokenResult = $this->createPaymentToken($payment);
-        if (!$createPaymentTokenResult->isSuccess()) {
-            $result->addErrors($createPaymentTokenResult->getErrors());
+        if ($this->isCheckoutMode()) {
+            $createPaymentTokenResult = $this->createPaymentToken($payment);
+            if (!$createPaymentTokenResult->isSuccess()) {
+                $result->addErrors($createPaymentTokenResult->getErrors());
+                return $result;
+            }
+
+            $createPaymentTokenData = $createPaymentTokenResult->getData();
+            $result->setPaymentUrl($createPaymentTokenData['redirect_url']);
+        } else if ($this->isWidgetMode()) {
+            $t = $this->getTemplateParams($payment);
+            PaySystem\Logger::addDebugInfo(__CLASS__ . ':getTemplateParams: ' . static::encode($t));
+            $this->setExtraParams($t);
+        } else {
             return $result;
         }
-
-        $createPaymentTokenData = $createPaymentTokenResult->getData();
-
-        if ($this->isCheckoutMode()) {
-            $result->setPaymentUrl($createPaymentTokenData['redirect_url']);
-        }
-
-        $this->setExtraParams($this->getTemplateParams($payment, $createPaymentTokenData));
 
         $showTemplateResult = $this->showTemplate($payment, $this->getTemplateName());
         if ($showTemplateResult->isSuccess()) {
@@ -92,7 +100,6 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
 
     /**
      * @param Payment $payment
-     * @param array $paymentTokenData
      * @return array
      * @throws Main\ArgumentException
      * @throws Main\ArgumentNullException
@@ -101,31 +108,32 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
      * @throws Main\ObjectPropertyException
      * @throws Main\SystemException
      */
-    private function getTemplateParams(Payment $payment, array $paymentTokenData): array
+    private function getTemplateParams(Payment $payment): array
     {
-        if ($this->isWidgetMode()) {
-            $params = [
-                'ServiceId' => $this->getBusinessValue($payment, 'PAYSELECTION_SITE_ID'),
-                'WidgetUrl' => $this->getBusinessValue($payment, 'PAYSELECTION_WIDGET_API_URL'),
-                'PaymentRequest' => [
-                    'Amount' => (string)($payment->getSum()),
-                    'Currency' => $payment->getField('CURRENCY'),
-                    'Description' => $this->getPaymentDescription($payment),
-                    'OrderId' => $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID'),
-                    'ExtraData' => [
-                        'WebhookUrl' => $this->getNotificationUrl($payment),
-                        'SuccessUrl' => $this->getSuccessUrl($payment),
-                        'DeclineUrl' => $this->getDeclineUrl($payment),
-                        'FailUrl' => $this->getFailUrl($payment),
-                        'CancelUrl' => $this->getCancelUrl($payment),
-                    ],
+        $orderId = $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID');
+        $params = [
+            'ServiceId' => $this->getBusinessValue($payment, 'PAYSELECTION_SITE_ID'),
+            'Key' => $this->getBusinessValue($payment, 'PAYSELECTION_KEY'),
+            'WidgetUrl' => $this->getBusinessValue($payment, 'PAYSELECTION_WIDGET_API_URL'),
+            'PaymentRequest' => [
+                'Amount' => (string)($payment->getSum()),
+                'Currency' => $payment->getField('CURRENCY'),
+                'Description' => $this->getPaymentDescription($payment),
+                'OrderId' => $orderId,
+                'ExtraData' => [
+                    'WebhookUrl' => $this->getNotificationUrl($payment),
+                    'SuccessUrl' => $this->getSuccessUrl($payment),
+                    'DeclineUrl' => $this->getDeclineUrl($payment),
+                    'FailUrl' => $this->getFailUrl($payment),
+                    'CancelUrl' => $this->getCancelUrl($payment),
                 ],
-                'CustomerInfo' => [
-                    'Language' => LANGUAGE_ID,
-                ],
-            ];
-        } else {
-            $params['url'] = $paymentTokenData['redirect_url'];
+            ],
+            'CustomerInfo' => [
+                'Language' => LANGUAGE_ID,
+            ],
+        ];
+        if ($this->getBusinessValue($payment, 'PAYSELECTION_RECEIPT')  == 'Y') {
+            $params['ReceiptData'] = $this->getReceiptData($payment);
         }
         $params['sum'] = (string)(PriceMaths::roundPrecision($payment->getSum()));
         $params['currency'] = $payment->getField('CURRENCY');
@@ -145,12 +153,11 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
     private function createPaymentToken(Payment $payment): ServiceResult
     {
         $result = new ServiceResult();
-
         $url = $this->getUrl($payment, 'getPaymentCreate');
+        $orderId = $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID');
         $params = [
             'MetaData' => [
                 'PaymentType' => 'Pay',
-//                'Initiator' => 'Widget',
             ],
             'PaymentRequest' => [
                 'Amount' => (string)($payment->getSum()),
@@ -158,7 +165,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
                 'Description' => $this->getPaymentDescription($payment),
                 'PaymentMethod' => 'Card',
                 'RebillFlag' => false,
-                'OrderId' => $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID'),
+                'OrderId' => $orderId,
                 'ExtraData' => [
                     'WebhookUrl' => $this->getNotificationUrl($payment),
                     'SuccessUrl' => $this->getSuccessUrl($payment),
@@ -171,6 +178,9 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
                 'Language' => LANGUAGE_ID,
             ],
         ];
+        if ($this->getBusinessValue($payment, 'PAYSELECTION_RECEIPT')  == 'Y') {
+            $params['ReceiptData'] = $this->getReceiptData($payment);
+        }
         $postData = static::encode($params);
         $headers = $this->getHeaders($payment, $postData);
 
@@ -183,6 +193,59 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
 
         return $result;
     }
+
+
+    private function getReceiptData(Payment $payment): array
+    {
+        $collection = $payment->getCollection();
+        $order = $collection->getOrder();
+        $userEmail = $order->getPropertyCollection()->getUserEmail();
+        $orderId = $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID');
+        return [
+            'timestamp' => date('d.m.Y H:i:s'),
+            'external_id' => $orderId,
+            'receipt' => [
+                'client' => [
+                    'email' => (string)(($userEmail) ? $userEmail->getValue() : ''),
+                ],
+                'company' => [
+                    'email' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_EMAIL'),
+                    'inn' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_INN'),
+                    'sno' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TAX'),
+                    'payment_address' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_ADDRESS'),
+                ],
+                'items' => $this->setFFDParams($payment),
+            ],
+            'payments' => [
+                'type' => 1,
+                'sum' => (float)(PriceMaths::roundPrecision($payment->getSum())),
+            ],
+            'total' => (float)(PriceMaths::roundPrecision($payment->getSum())),
+            ];
+    }
+
+
+    private function setFFDParams(Payment $payment): array
+    {
+        $paymentCollection = $payment->getCollection();
+        $order = $paymentCollection->getOrder();
+
+        $Basket = $order->getBasket();
+        $basketItems = $Basket->getBasketItems();
+        $positions = [];
+
+        foreach ($basketItems as $key => $BasketItem) {
+            $positions[] = array(
+                'name' => str_replace("\n", "", mb_substr($BasketItem->getField('NAME'), 0, 120)),
+                'sum' => $BasketItem->getFinalPrice(),
+                'price' => $BasketItem->getPrice(),
+                'quantity' =>  $BasketItem->getQuantity(),
+            );
+        }
+
+        return $positions;
+    }
+
 
     /**
      * @param Payment $payment
