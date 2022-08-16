@@ -240,6 +240,9 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
                 'sum' => $BasketItem->getFinalPrice(),
                 'price' => $BasketItem->getPrice(),
                 'quantity' =>  $BasketItem->getQuantity(),
+                'vat' => [
+                    'type' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS'),
+                ]
             );
         }
 

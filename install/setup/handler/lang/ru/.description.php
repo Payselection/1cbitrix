@@ -34,3 +34,12 @@ $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_2"] = "Упрощённая, доход �
 $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_3"] = "Единый налог на вменённый доход";
 $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_4"] = "Единый сельскохозяйственный налог";
 $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_5"] = "Патентная система налогообложения";
+
+$MESS["SALE_PAYSELECTION_NDS_NAME"] = "НДС";
+$MESS["SALE_PAYSELECTION_NDS_DESCR"] = "Обязательно укажите, если используете печать чеков через Payselection";
+$MESS["SALE_PAYSELECTION_NDS_none"] = "без НДС";
+$MESS["SALE_PAYSELECTION_NDS_vat0"] = "НДС по ставке 0%";
+$MESS["SALE_PAYSELECTION_NDS_vat10"] = "НДС чека по ставке 10%";
+$MESS["SALE_PAYSELECTION_NDS_vat18"] = "НДС чека по ставке 18%";
+$MESS["SALE_PAYSELECTION_NDS_vat110"] = "НДС чека по расчетной ставке 10/110";
+$MESS["SALE_PAYSELECTION_NDS_vat118"]  = "НДС чека по расчетной ставке 18/118";

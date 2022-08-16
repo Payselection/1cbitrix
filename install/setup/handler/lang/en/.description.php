@@ -34,3 +34,12 @@ $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_2"] = "Simplified, income minus expences"
 $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_3"] = "Unified tax on imputed income";
 $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_4"] = "Unified agricultural tax";
 $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_5"] = "Patent taxation system";
+
+$MESS["SALE_PAYSELECTION_NDS_NAME"] = "Item-dependent tax (VAT)";
+$MESS["SALE_PAYSELECTION_NDS_DESCR"] = "Be sure to specify if you use receipt printing through Payselection";
+$MESS["SALE_PAYSELECTION_NDS_none"] = "tax excluded";
+$MESS["SALE_PAYSELECTION_NDS_vat0"] = "VAT at 0%";
+$MESS["SALE_PAYSELECTION_NDS_vat10"] = "VAT receipt at rate 10%";
+$MESS["SALE_PAYSELECTION_NDS_vat18"] = "VAT receipt at rate 18%";
+$MESS["SALE_PAYSELECTION_NDS_vat110"] = "VAT check at the estimated rate 10/110";
+$MESS["SALE_PAYSELECTION_NDS_vat118"]  = "VAT check at the estimated rate 18/118";

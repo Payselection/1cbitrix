@@ -117,6 +117,23 @@ $data = [
                 "PROVIDER_KEY" => "INPUT"
             )
         ),
+        "PAYSELECTION_PAYMENT_NDS" => array(
+            "NAME" => Loc::getMessage("SALE_PAYSELECTION_NDS_NAME"),
+            "DESCRIPTION" => Loc::getMessage("SALE_PAYSELECTION_NDS_DESCR"),
+            "INPUT" => array(
+                'TYPE' => 'ENUM',
+                'OPTIONS' => array(
+                    'none'  => Loc::getMessage("SALE_PAYSELECTION_NDS_none"),
+                    'vat0'  => Loc::getMessage("SALE_PAYSELECTION_NDS_vat0"),
+                    'vat10' => Loc::getMessage("SALE_PAYSELECTION_NDS_vat10"),
+                    'vat18' => Loc::getMessage("SALE_PAYSELECTION_NDS_vat18"),
+                    'vat110'=> Loc::getMessage("SALE_PAYSELECTION_NDS_vat110"),
+                    'vat118'=> Loc::getMessage("SALE_PAYSELECTION_NDS_vat118")
+                )
+            ),
+            "SORT" => 450,
+            "GROUP" => Loc::getMessage("SALE_PAYSELECTION_GROUP_RECEIPT"),
+        ),
 		'PAYSELECTION_NOTIFICATION_URL' => [
 			'NAME' => Loc::getMessage('SALE_PAYSELECTION_NOTIFICATION_URL'),
 			'SORT' => 500,
