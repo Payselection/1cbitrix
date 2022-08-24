@@ -71,7 +71,8 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
             }
 
             $createPaymentTokenData = $createPaymentTokenResult->getData();
-            $result->setPaymentUrl($createPaymentTokenData['redirect_url']);
+            $result->setPaymentUrl($createPaymentTokenData['url']);
+            $this->setExtraParams($createPaymentTokenData);
         } else if ($this->isWidgetMode()) {
             $t = $this->getTemplateParams($payment);
             PaySystem\Logger::addDebugInfo(__CLASS__ . ':getTemplateParams: ' . static::encode($t));
@@ -182,7 +183,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
             $params['ReceiptData'] = $this->getReceiptData($payment);
         }
         $postData = static::encode($params);
-        $headers = $this->getHeaders($payment, $postData);
+        $headers = $this->getHeaders($payment, $postData, $url);
 
         $sendResult = $this->sendCreate(self::SEND_METHOD_HTTP_POST, $url, $postData, $headers);
         if ($sendResult->isSuccess()) {
@@ -264,7 +265,7 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
         $result = new ServiceResult();
 
         $url = $this->getUrl($payment, 'getPaymentStatus');
-        $headers = $this->getHeaders($payment);
+        $headers = $this->getHeaders($payment, '', $url, 'GET');
         PaySystem\Logger::addDebugInfo(__CLASS__ . ':getPayselectionPayment url: ' . $url);
 
         $sendResult = $this->send(self::SEND_METHOD_HTTP_GET, $url, [], $headers);
@@ -372,10 +373,9 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
         }
 
         PaySystem\Logger::addDebugInfo(__CLASS__ . ': response data: ' . $response);
-
         if ($response) {
             $result->setData([
-                'redirect_url' => trim($response, '"'),
+                'url' => trim($response, '"'),
             ]);
         } else {
             $result->addError(PaySystem\Error::create(Loc::getMessage('SALE_PAYSELECTION_RESPONSE_DECODE_ERROR')));
@@ -638,15 +638,23 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
      * @param string $body
      * @return array
      */
-    private function getHeaders(Payment $payment, string $body=''): array
+    private function getHeaders(Payment $payment, string $body='', string $url='', string $method='POST'): array
     {
         $secretKey = $this->getBusinessValue($payment, 'PAYSELECTION_SECRET_KEY');
+        $uid = $this->getIdempotenceKey();
+        $site_id = $this->getBusinessValue($payment, 'PAYSELECTION_SITE_ID');
+        $path = parse_url($url, PHP_URL_PATH);
+        $msg = $method.PHP_EOL.
+            $path.PHP_EOL.
+            $site_id.PHP_EOL.
+            $uid.PHP_EOL.
+            $body;
         return [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
-            'X-SITE-ID' => $this->getBusinessValue($payment, 'PAYSELECTION_SITE_ID'),
-            'X-REQUEST-ID' => $this->getIdempotenceKey(),
-            'X-REQUEST-SIGNATURE' => $this->getSignature($body, $secretKey),
+            'X-SITE-ID' => $site_id,
+            'X-REQUEST-ID' => $uid,
+            'X-REQUEST-SIGNATURE' => $this->getSignature($msg, $secretKey),
         ];
     }
 
