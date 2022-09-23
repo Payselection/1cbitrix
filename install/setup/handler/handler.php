@@ -24,8 +24,6 @@ Loc::loadMessages(__FILE__);
  */
 class payselection_paymentHandler extends PaySystem\ServiceHandler
 {
-    use PaySystem\Cashbox\CheckTrait;
-
     private const MODE_CHECKOUT = 'checkout';
     private const MODE_WIDGET = 'widget';
 
