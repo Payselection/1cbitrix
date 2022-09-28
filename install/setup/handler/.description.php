@@ -65,6 +65,18 @@ $data = [
 				'PROVIDER_VALUE' => Loc::getMessage('SALE_PAYSELECTION_PAYMENT_DESCRIPTION_TEMPLATE'),
 			],
 		],
+        'PS_CHANGE_STATUS_PAY' => [
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_CHANGE_STATUS_PAY'),
+            'SORT' => 310,
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_CONNECT_SETTINGS'),
+            'INPUT' => [
+                'TYPE' => 'Y/N',
+            ],
+            'DEFAULT' => [
+                'PROVIDER_KEY' => 'INPUT',
+                'PROVIDER_VALUE' => 'Y',
+            ],
+        ],
         'PAYSELECTION_RECEIPT' => array(
             'NAME' => Loc::getMessage("SALE_PAYSELECTION_RECEIPT_NAME"),
             'DESCRIPTION' => Loc::getMessage("SALE_PAYSELECTION_RECEIPT_DESCR"),

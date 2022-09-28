@@ -5,6 +5,7 @@ $MESS["SALE_PAYSELECTION_ID"] = "Идентификатор(SITE-ID)";
 $MESS["SALE_PAYSELECTION_SECRET_KEY"] = "Секретный ключ";
 $MESS["SALE_PAYSELECTION_KEY"] = "Public key";
 $MESS["SALE_PAYSELECTION_GATEWAY_API_URL"] = "URL, API Платежного шлюза";
+$MESS["SALE_PAYSELECTION_CHANGE_STATUS_PAY"] = "Автоматически оплачивать заказ при получении успешного статуса оплаты";
 $MESS["SALE_PAYSELECTION_CHECKOUT_API_URL"] = "URL, WebForm";
 $MESS["SALE_PAYSELECTION_WIDGET_API_URL"] = "URL, Widget";
 $MESS["SALE_PAYSELECTION_PAYMENT_DESCRIPTION"] = "Описание заказа";
