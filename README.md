@@ -12,7 +12,7 @@
 ### Установка модуля
 
 * Создайте резервную копию вашего магазина и базы данных
-* Скачайте архив модуля [bitrix-payselection.zip](https://github.com/.../bitrix-payselection/raw/master/bitrix-payselection.zip)
+* Скачайте архив модуля [1cbitrix](https://github.com/Payselection/1cbitrix/archive/refs/heads/master.zip)
 * Распакуйте архив и скопируйте каталог `payselection.payment` в каталог `<1C-Bitrix/bitrix/modules/`
 * Зайдите в зону 1C-Битрикс администратора и выберите меню `Marketplace -> Установленные решения`
 * Установите модуль __Модуль оплаты Payselection (payselection.payment)__. Будет создана платежная система с обработчиками.
