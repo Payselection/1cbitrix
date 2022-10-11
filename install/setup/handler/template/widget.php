@@ -26,11 +26,7 @@ $sum = round($params['sum'], 2);
 <script type="text/javascript">
     this.pay = function() {
         let widget = new pw.PayWidget();
-        widget.pay(
-            {
-                serviceId: "<?= CUtil::JSEscape($params['ServiceId']) ?>",
-                key: "<?= CUtil::JSEscape($params['Key']) ?>",
-            },
+        let pay =
             {
                 MetaData: {
                     PaymentType: "Pay",
@@ -44,18 +40,26 @@ $sum = round($params['sum'], 2);
                         WebhookUrl: "<?= CUtil::JSEscape($params['PaymentRequest']['ExtraData']['WebhookUrl']) ?>",
                     },
                 },
-                ReceiptData: JSON.parse("<?= CUtil::JSEscape(json_encode($params['ReceiptData'])) ?>"),
-            },
+            };
+        if ("<?= CUtil::JSEscape(json_encode($params['ReceiptData'])) ?>" !== "null") {
+            pay['ReceiptData'] = JSON.parse("<?= CUtil::JSEscape(json_encode($params['ReceiptData'])) ?>");
+        }
+        widget.pay(
             {
-                onSuccess: function(res) {
+                serviceId: "<?= CUtil::JSEscape($params['ServiceId']) ?>",
+                key: "<?= CUtil::JSEscape($params['Key']) ?>",
+            },
+            pay,
+            {
+                onSuccess: function (res) {
                     console.log("onSuccess from shop", res);
                     window.location.reload();
                 },
-                onError: function(res) {
+                onError: function (res) {
                     console.log("onFail from shop", res);
                     window.location.reload();
                 },
-                onClose: function(res) {
+                onClose: function (res) {
                     console.log("onClose from shop", res);
                     window.location.reload();
                 },
