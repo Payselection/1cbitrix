@@ -436,58 +436,73 @@ class payselection_paymentHandler extends PaySystem\ServiceHandler
         $inputStream = static::readFromStream();
         PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest input stream: ' . $inputStream);
         $data = static::decode($inputStream);
-        $payment->setField('PS_INVOICE_ID', $data['TransactionId']);
-
-        $payselectionPaymentResult = $this->getPayselectionPayment($payment);
-        if ($payselectionPaymentResult->isSuccess()) {
-            $payselectionPaymentData = $payselectionPaymentResult->getData();
-            PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest status: ' . $payselectionPaymentData);
-            if ($payselectionPaymentData['TransactionState'] === self::STATUS_SUCCESSFUL_CODE) {
-                $description = Loc::getMessage('SALE_PAYSELECTION_TRANSACTION', [
-                    '#ID#' => $data['TransactionId'],
-                ]);
-                PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest $description: ' . $description);
-                $fields = [
-                    'PS_STATUS_CODE' => $data['TransactionState'],
-                    'PS_STATUS_DESCRIPTION' => $description,
-                    'PS_SUM' => $data['Amount'],
-                    'PS_STATUS' => 'N',
-                    'PS_CURRENCY' => $data['Currency'],
-                    'PS_RESPONSE_DATE' => new Main\Type\DateTime(),
-                    'PS_INVOICE_ID' => $data['TransactionId'],
-                    'PS_CARD_NUMBER' => $data['CardMasked'],
-                ];
-
-                if ($this->isSumCorrect($payment, $data['Amount'])) {
-                    $fields['PS_STATUS'] = 'Y';
-
-                    PaySystem\Logger::addDebugInfo(
-                        __CLASS__ . ': PS_CHANGE_STATUS_PAY=' . $this->getBusinessValue($payment, 'PS_CHANGE_STATUS_PAY')
-                    );
-
-                    if ($this->getBusinessValue($payment, 'PS_CHANGE_STATUS_PAY') === 'Y') {
-                        $result->setOperationType(PaySystem\ServiceResult::MONEY_COMING);
-                    }
-                } else {
-                    $error = Loc::getMessage('SALE_PAYSELECTION_ERROR_SUM');
-                    $fields['PS_STATUS_DESCRIPTION'] .= '. ' . $error;
-                    $result->addError(PaySystem\Error::create($error));
-                }
-
-                $result->setPsData($fields);
-            } else {
-                $result->addError(
-                    PaySystem\Error::create(
-                        Loc::getMessage('SALE_PAYSELECTION_ERROR_STATUS',
-                            [
-                                '#STATUS#' => $data['TransactionState'],
-                            ]
-                        )
-                    )
+        if (!isset($data['Event'])) {
+            PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest:check: ' . $data['OrderId']);
+            if ($this->isSumCorrect($payment, $data['Amount'])) {
+                PaySystem\Logger::addDebugInfo(
+                    __CLASS__ . ': check is done'
                 );
+            } else {
+                PaySystem\Logger::addDebugInfo(
+                    __CLASS__ . ': check fail(different sum)'
+                );
+                CHTTP::SetStatus("403 Forbidden");
+                die();
             }
         } else {
-            $result->addErrors($payselectionPaymentResult->getErrors());
+            $payment->setField('PS_INVOICE_ID', $data['TransactionId']);
+
+            $payselectionPaymentResult = $this->getPayselectionPayment($payment);
+            if ($payselectionPaymentResult->isSuccess()) {
+                $payselectionPaymentData = $payselectionPaymentResult->getData();
+                PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest status: ' . $payselectionPaymentData);
+                if ($payselectionPaymentData['TransactionState'] === self::STATUS_SUCCESSFUL_CODE) {
+                    $description = Loc::getMessage('SALE_PAYSELECTION_TRANSACTION', [
+                        '#ID#' => $data['TransactionId'],
+                    ]);
+                    PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest $description: ' . $description);
+                    $fields = [
+                        'PS_STATUS_CODE' => $data['TransactionState'],
+                        'PS_STATUS_DESCRIPTION' => $description,
+                        'PS_SUM' => $data['Amount'],
+                        'PS_STATUS' => 'N',
+                        'PS_CURRENCY' => $data['Currency'],
+                        'PS_RESPONSE_DATE' => new Main\Type\DateTime(),
+                        'PS_INVOICE_ID' => $data['TransactionId'],
+                        'PS_CARD_NUMBER' => $data['CardMasked'],
+                    ];
+
+                    if ($this->isSumCorrect($payment, $data['Amount'])) {
+                        $fields['PS_STATUS'] = 'Y';
+
+                        PaySystem\Logger::addDebugInfo(
+                            __CLASS__ . ': PS_CHANGE_STATUS_PAY=' . $this->getBusinessValue($payment, 'PS_CHANGE_STATUS_PAY')
+                        );
+
+                        if ($this->getBusinessValue($payment, 'PS_CHANGE_STATUS_PAY') === 'Y') {
+                            $result->setOperationType(PaySystem\ServiceResult::MONEY_COMING);
+                        }
+                    } else {
+                        $error = Loc::getMessage('SALE_PAYSELECTION_ERROR_SUM');
+                        $fields['PS_STATUS_DESCRIPTION'] .= '. ' . $error;
+                        $result->addError(PaySystem\Error::create($error));
+                    }
+
+                    $result->setPsData($fields);
+                } else {
+                    $result->addError(
+                        PaySystem\Error::create(
+                            Loc::getMessage('SALE_PAYSELECTION_ERROR_STATUS',
+                                [
+                                    '#STATUS#' => $data['TransactionState'],
+                                ]
+                            )
+                        )
+                    );
+                }
+            } else {
+                $result->addErrors($payselectionPaymentResult->getErrors());
+            }
         }
 
         return $result;
