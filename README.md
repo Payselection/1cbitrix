@@ -50,12 +50,13 @@
 
 ### Тестовые данные
 
-* Идентификатор(SITE-ID): `20029`
-* Секретный ключ `FUY4PJKqN4uQcBZW`
-* Public key `041617e7b659ecc3ba52867f38dd70ab750f470739eaebf6983fd87a505f8035f0394bb08905eeef31239fd9b426c815f41439d11fa2a1ee68c7e9e37990d5cffa`
-* URL, WebForm `https://webform.payselection.com`
-* URL, API Платежного шлюза `https://gw.payselection.com`
-* URL, Widget `https://widget.payselection.com/lib/pay-widget.js`
+Для начала интеграции в системе необходимо уточнить следующие параметры:
+* Идентификатор(SITE-ID)
+* Секретный ключ 
+* Public key 
+* URL, WebForm 
+* URL, API Платежного шлюза 
+* URL, Widget 
 
 ### Данные тестовой карты:
 
