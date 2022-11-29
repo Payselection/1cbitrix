@@ -4,10 +4,10 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-class p10102022_PayCode2022 extends CModule
+class p10102022_paycode2022 extends CModule
 {
 
-    var $MODULE_ID = "p10102022.PayCode2022";
+    var $MODULE_ID = "p10102022.paycode2022";
     public $MODULE_VERSION;
     public $MODULE_VERSION_DATE;
     public $MODULE_NAME;
@@ -64,7 +64,7 @@ class p10102022_PayCode2022 extends CModule
 
     public function uninstallFiles()
     {
-        DeleteDirFilesEx("/bitrix/php_interface/include/sale_payment/p10102022_PayCode2022");
+        DeleteDirFilesEx("/bitrix/php_interface/include/sale_payment/p10102022_paycode2022");
         return true;
     }
 }

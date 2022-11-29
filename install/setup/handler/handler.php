@@ -22,7 +22,7 @@ Loc::loadMessages(__FILE__);
  * Class PayselectionHandler
  * @package Sale\Handlers\PaySystem
  */
-class p10102022_PayCode2022Handler extends PaySystem\ServiceHandler
+class p10102022_paycode2022Handler extends PaySystem\ServiceHandler
 {
     private const MODE_CHECKOUT = 'checkout';
     private const MODE_WIDGET = 'widget';
