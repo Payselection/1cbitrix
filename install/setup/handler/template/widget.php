@@ -13,7 +13,7 @@ $sum = round($params['sum'], 2);
 				'#SUM#' => SaleFormatCurrency($sum, $params['currency']),
 			]
 		) ?></p>
-	<div class="d-flex align-items-center mb-3">
+	<div class="d-flex align-items-center mb-3" id="paysystem-button">
 		<div class="col-auto pl-0">
 			<a class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;" id="paysystem-button-pay" href="#"><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_WIDGET_BUTTON_PAID') ?></a>
 		</div>
@@ -29,7 +29,7 @@ $sum = round($params['sum'], 2);
         let pay =
             {
                 MetaData: {
-                    PaymentType: "Pay",
+                    PaymentType: "<?= CUtil::JSEscape($params['payment_type']) ?>",
                 },
                 PaymentRequest: {
                     OrderId: "<?= CUtil::JSEscape($params['PaymentRequest']['OrderId']) ?>",
@@ -53,7 +53,6 @@ $sum = round($params['sum'], 2);
             {
                 onSuccess: function (res) {
                     console.log("onSuccess from shop", res);
-                    window.location.reload();
                 },
                 onError: function (res) {
                     console.log("onFail from shop", res);
@@ -72,6 +71,7 @@ $sum = round($params['sum'], 2);
         a.onclick = function (e) {
             e.preventDefault();
             pay();
+            document.getElementById("paysystem-button").remove();
         }
     }
 </script>

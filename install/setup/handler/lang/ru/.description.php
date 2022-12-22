@@ -21,6 +21,10 @@ $MESS["SALE_PAYSELECTION_FAIL_URL_DESC"] = "Оставьте пустым для
 $MESS["SALE_PAYSELECTION_CANCEL_URL"] = "URL, на который будет перенаправлен клиент в случае отмены операции";
 $MESS["SALE_PAYSELECTION_CANCEL_URL_DESC"] = "Оставьте пустым для автоматического определения адреса, клиент вернется на страницу с которой был выполнен переход на оплату";
 
+$MESS["SALE_PAYSELECTION_TYPE_SYSTEM"] = "Схема проведения платежей";
+$MESS["SALE_PAYSELECTION_TYPE_SCHEME_0"] = "Одностадийная оплата";
+$MESS["SALE_PAYSELECTION_TYPE_SCHEME_1"] = "Двухстадийная оплата";
+
 $MESS["SALE_PAYSELECTION_GROUP_RECEIPT"] = "Отправка чеков";
 $MESS["SALE_PAYSELECTION_RECEIPT_NAME"] = "Чек выпускает Payselection";
 $MESS["SALE_PAYSELECTION_RECEIPT_DESCR"] = "Если отмечено, то сформирует и отправит клиенту чек через Payselection";

@@ -20,6 +20,10 @@ $MESS["SALE_PAYSELECTION_SECRET_KEY"] = "Secret key";
 $MESS["SALE_PAYSELECTION_KEY"] = "Public key";
 $MESS["SALE_PAYSELECTION_SUCCESS_URL"] = "Redirect customer to this URL upon successful transaction";
 
+$MESS["SALE_PAYSELECTION_TYPE_SYSTEM"] = "Payment scheme type";
+$MESS["SALE_PAYSELECTION_TYPE_SCHEME_0"] = "One-step payment";
+$MESS["SALE_PAYSELECTION_TYPE_SCHEME_1"] = "Two-stage payment";
+
 $MESS["SALE_PAYSELECTION_GROUP_RECEIPT"] = "Fiscalization";
 $MESS["SALE_PAYSELECTION_RECEIPT_NAME"] = "Send cart data(including customer info)";
 $MESS["SALE_PAYSELECTION_RECEIPT_DESCR"] = "If this option is enabled order receipts will be created and sent to your customer and to the revenue service via Payselection.";
