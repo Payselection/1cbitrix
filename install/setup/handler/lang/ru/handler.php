@@ -5,4 +5,4 @@ $MESS["SALE_PAYSELECTION_RESPONSE_DECODE_ERROR"] = "Ошибка декодир�
 $MESS["SALE_PAYSELECTION_ERROR_STATUS"] = "Статус платежа: #STATUS#";
 $MESS["SALE_PAYSELECTION_TRANSACTION"] = "Транзакция #ID#";
 $MESS["SALE_PAYSELECTION_ERROR_SUM"] = "Сумма платежа не совпадает с суммой оплаты";
-$MESS["SALE_PAYSELECTION_REFUND_REASON"] = "Причина возврата не указана";
+$MESS['SALE_PAYSELECTION_FIRLD_DELIVERY'] = 'Доставка';

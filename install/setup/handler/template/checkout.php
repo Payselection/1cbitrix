@@ -17,8 +17,8 @@ $sum = round($params['sum'], 2);
 		<div class="col-auto pl-0">
 			<a class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;" href="<?= $params['url'] ?>"><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_CHECKOUT_BUTTON_PAID') ?></a>
 		</div>
-		<div class="col pr-0"><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_CHECKOUT_REDIRECT_MESS') ?></div>
+		<div class="col pr-0">&nbsp;&nbsp;<?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_CHECKOUT_REDIRECT_MESS') ?></div>
 	</div>
 
-	<p><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_CHECKOUT_WARNING_RETURN') ?></p>
+    <div class="alert alert-info"><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_CHECKOUT_WARNING_RETURN') ?></div>
 </div>

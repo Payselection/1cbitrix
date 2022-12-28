@@ -32,6 +32,32 @@ $MESS["SALE_PAYSELECTION_PAYMENT_INN"] = "ИНН организации";
 $MESS["SALE_PAYSELECTION_PAYMENT_ADDRESS"] = "Юридический адрес";
 $MESS["SALE_PAYSELECTION_PAYMENT_EMAIL"] = "Email организации";
 
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_DELIVERY_METHOD_NAME"] = 'Тип оплаты для доставки';
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_NAME"] = 'Тип оплаты';
+$MESS['SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_1'] = "Полная предварительная оплата до момента передачи предмета расчёта";
+$MESS['SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_2'] = "Частичная предварительная оплата до момента передачи предмета расчёта";
+$MESS['SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_3'] = "Аванс";
+$MESS['SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_4'] = "Полная оплата в момент передачи предмета расчёта";
+$MESS['SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_5'] = "Частичная оплата предмета расчёта в момент его передачи с последующей оплатой в кредит";
+$MESS['SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_6'] = "Передача предмета расчёта без его оплаты в момент его передачи с последующей оплатой в кредит";
+$MESS['SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_7'] = "Оплата предмета расчёта после его передачи с оплатой в кредит";
+
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_NAME"] = 'Тип оплачиваемой позиции';
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_DELIVERY_NAME"] = 'Тип оплачиваемой позиции для доставки';
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_1"] = "Товар";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_2"] = "Подакцизный товар";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_3"] = "Работа";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_4"] = "Услуга";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_5"] = "Ставка азартной игры";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_6"] = "Выигрыш азартной игры";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_7"] = "Лотерейный билет";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_8"] = "Выигрыш лотереи";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_9"] = "Предоставление РИД";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_10"] = "Платёж";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_11"] = "Агентское вознаграждение";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_12"] = "Составной предмет расчёта";
+$MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_13"] = "Иной предмет расчёта";
+
 $MESS["SALE_PAYSELECTION_RECEIPT_TAX_NAME"] = "Система налогообложения";
 $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_0"] = "Общая";
 $MESS["SALE_PAYSELECTION_RECEIPT_VALUE_1"] = "Упрощённая, доход";

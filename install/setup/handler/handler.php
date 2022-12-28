@@ -117,7 +117,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             'Key' => $this->getBusinessValue($payment, 'PAYSELECTION_KEY'),
             'WidgetUrl' => $this->getBusinessValue($payment, 'PAYSELECTION_WIDGET_API_URL'),
             'PaymentRequest' => [
-                'Amount' => (string)($payment->getSum()),
+                'Amount' => (string)($this->roundNumber($payment->getSum())),
                 'Currency' => $payment->getField('CURRENCY'),
                 'Description' => $this->getPaymentDescription($payment),
                 'OrderId' => $orderId,
@@ -136,7 +136,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         if ($this->getBusinessValue($payment, 'PAYSELECTION_RECEIPT')  == 'Y') {
             $params['ReceiptData'] = $this->getReceiptData($payment);
         }
-        $params['sum'] = (string)(PriceMaths::roundPrecision($payment->getSum()));
+        $params['sum'] = (string)($this->roundNumber($payment->getSum()));
         $params['currency'] = $payment->getField('CURRENCY');
         $params['payment_type'] = ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'Block' : 'Pay');
 
@@ -162,7 +162,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'PaymentType' => ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'Block' : 'Pay'),
             ],
             'PaymentRequest' => [
-                'Amount' => (string)($payment->getSum()),
+                'Amount' => (string)($this->roundNumber($payment->getSum())),
                 'Currency' => $payment->getField('CURRENCY'),
                 'Description' => $this->getPaymentDescription($payment),
                 'PaymentMethod' => 'Card',
@@ -217,13 +217,13 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                     'payment_address' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_ADDRESS'),
                 ],
                 'items' => $this->setFFDParams($payment),
-            ],
-            'payments' => [
-                'type' => 1,
-                'sum' => (float)(PriceMaths::roundPrecision($payment->getSum())),
-            ],
-            'total' => (float)(PriceMaths::roundPrecision($payment->getSum())),
-            ];
+                'payments' => array([
+                    'type' => 1,
+                    'sum' => (float)(PriceMaths::roundPrecision($payment->getSum())),
+                ]),
+                'total' => (float)(PriceMaths::roundPrecision($payment->getSum())),
+            ]
+        ];
     }
 
 
@@ -242,6 +242,22 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'sum' => $BasketItem->getFinalPrice(),
                 'price' => $BasketItem->getPrice(),
                 'quantity' =>  $BasketItem->getQuantity(),
+                'payment_method' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_METHOD'),
+                'payment_object' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_OBJECT'),
+                'vat' => [
+                    'type' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS'),
+                ]
+            );
+        }
+
+        if ($order->getField('PRICE_DELIVERY') > 0) {
+            $positions[] = array(
+                'name' => Loc::getMessage('SALE_PAYSELECTION_FIRLD_DELIVERY'),
+                'sum' => $order->getField('PRICE_DELIVERY'),
+                'price' => $order->getField('PRICE_DELIVERY'),
+                'quantity' => 1,
+                'payment_method' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_METHOD_DELIVERY'),
+                'payment_object' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_OBJECT_DELIVERY'),
                 'vat' => [
                     'type' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS'),
                 ]
@@ -293,12 +309,50 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     public function refund(Payment $payment, $refundableSum): ServiceResult
     {
         $result = new ServiceResult();
-        $type_type = ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'cancel' : 'refund');
+        $type_system = ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'cancel' : 'refund');
+        $payselectionPaymentResult = $this->getPayselectionPayment($payment);
+        if ($payselectionPaymentResult->isSuccess())
+        {
+            $payselectionPaymentData = $payselectionPaymentResult->getData();
+            if (!empty($payselectionPaymentData['Code'])) {
+                $result->addError(
+                    PaySystem\Error::create(
+                        Loc::getMessage('SALE_PAYSELECTION_ERROR_STATUS',
+                            [
+                                '#STATUS#' => $payselectionPaymentData['Description'],
+                            ]
+                        )
+                    )
+                );
+            } else
+            {
+                switch ($payselectionPaymentData['TransactionState'])
+                {
+                    case self::STATUS_SUCCESSFUL_CODE:
+                        $type_system = 'refund';
+                        break;
+                    case self::STATUS_PREAUTORIZED_CODE:
+                        $type_sytem = 'cancel';
+                        break;
+                    case self::STATUS_VOIDED_CODE:
+                        $result->addError(
+                            PaySystem\Error::create(
+                                'Transaction already canceled'
+                            )
+                        );
+                        break;
+                }
+            }
+        } else
+        {
+            $result->addErrors($sendResult->getErrors());
+            return $result;
+        }
         PaySystem\Logger::addDebugInfo(__CLASS__ . ':refund: ' . $type_type);
-        $url = $this->getUrl($payment, $type_type);
+        $url = $this->getUrl($payment, $type_system);
         $params = [
             'TransactionId' => $payment->getField('PS_INVOICE_ID'),
-            'Amount' => (string)($refundableSum),
+            'Amount' => (string)($this->roundNumber($refundableSum)),
             'Currency' => $payment->getField('CURRENCY'),
             'WebhookUrl' => $this->getNotificationUrl($payment),
         ];
@@ -315,7 +369,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $verifyResponseResult = $this->verifyResponse($refundData);
         if ($verifyResponseResult->isSuccess())
         {
-            $payment->setField('PS_STATUS_DESCRIPTION', PriceMaths::roundPrecision($refundableSum));
+            $payment->setField('PS_STATUS_DESCRIPTION', $this->roundNumber($refundableSum));
         }
         else
         {
@@ -490,7 +544,17 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             $payselectionPaymentResult = $this->getPayselectionPayment($payment);
             if ($payselectionPaymentResult->isSuccess()) {
                 $payselectionPaymentData = $payselectionPaymentResult->getData();
-                if ($payselectionPaymentData['TransactionState'] === self::STATUS_SUCCESSFUL_CODE ||
+                if (!empty($payselectionPaymentData['Code'])) {
+                    $result->addError(
+                        PaySystem\Error::create(
+                            Loc::getMessage('SALE_PAYSELECTION_ERROR_STATUS',
+                                [
+                                    '#STATUS#' => $payselectionPaymentData['Description'],
+                                ]
+                            )
+                        )
+                    );
+                } else if ($payselectionPaymentData['TransactionState'] === self::STATUS_SUCCESSFUL_CODE ||
                     $payselectionPaymentData['TransactionState'] === self::STATUS_PREAUTORIZED_CODE ||
                     $payselectionPaymentData['TransactionState'] === self::STATUS_VOIDED_CODE) {
                     if ($data['Event'] === 'Refund' || $data['Event'] === 'Cancel') {
@@ -816,5 +880,10 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         } catch (Main\ArgumentException $exception) {
             return false;
         }
+    }
+
+    private function roundNumber($num): string
+    {
+        return number_format($num, 2, '.', '');
     }
 }
