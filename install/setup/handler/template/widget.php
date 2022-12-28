@@ -13,13 +13,13 @@ $sum = round($params['sum'], 2);
 				'#SUM#' => SaleFormatCurrency($sum, $params['currency']),
 			]
 		) ?></p>
-	<div class="d-flex align-items-center mb-3">
+	<div class="d-flex align-items-center mb-3" id="paysystem-button">
 		<div class="col-auto pl-0">
 			<a class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;" id="paysystem-button-pay" href="#"><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_WIDGET_BUTTON_PAID') ?></a>
 		</div>
 	</div>
 
-	<p><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_WIDGET_WARNING_RETURN') ?></p>
+    <div class="alert alert-info"><?= Loc::getMessage('SALE_HANDLERS_PAY_SYSTEM_TEMPLATE_PAYSELECTION_WIDGET_WARNING_RETURN') ?></div>
 </div>
 
 <script src="<?= CUtil::JSEscape($params['WidgetUrl']) ?>"></script>
@@ -29,16 +29,14 @@ $sum = round($params['sum'], 2);
         let pay =
             {
                 MetaData: {
-                    PaymentType: "Pay",
+                    PaymentType: "<?= CUtil::JSEscape($params['payment_type']) ?>",
                 },
                 PaymentRequest: {
                     OrderId: "<?= CUtil::JSEscape($params['PaymentRequest']['OrderId']) ?>",
                     Amount: "<?= CUtil::JSEscape($params['PaymentRequest']['Amount']) ?>",
                     Currency: "<?= CUtil::JSEscape($params['PaymentRequest']['Currency']) ?>",
                     Description: "<?= CUtil::JSEscape($params['PaymentRequest']['Description']) ?>",
-                    ExtraData: {
-                        WebhookUrl: "<?= CUtil::JSEscape($params['PaymentRequest']['ExtraData']['WebhookUrl']) ?>",
-                    },
+                    ExtraData: JSON.parse("<?= CUtil::JSEscape(json_encode($params['PaymentRequest']['ExtraData'])) ?>"),
                 },
             };
         if ("<?= CUtil::JSEscape(json_encode($params['ReceiptData'])) ?>" !== "null") {
@@ -53,15 +51,25 @@ $sum = round($params['sum'], 2);
             {
                 onSuccess: function (res) {
                     console.log("onSuccess from shop", res);
-                    window.location.reload();
+                    if (!isEmpty(res.returnUrl)) {
+                        window.location.href = res.returnUrl;
+                    }
                 },
                 onError: function (res) {
                     console.log("onFail from shop", res);
-                    window.location.reload();
+                    if (!isEmpty(res.returnUrl)) {
+                        window.location.href = res.returnUrl;
+                    } else {
+                        window.location.reload();
+                    }
                 },
                 onClose: function (res) {
                     console.log("onClose from shop", res);
-                    window.location.reload();
+                    if (!isEmpty(res.returnUrl)) {
+                        window.location.href = res.returnUrl;
+                    } else {
+                        window.location.reload();
+                    }
                 },
             },
         );
@@ -72,6 +80,10 @@ $sum = round($params['sum'], 2);
         a.onclick = function (e) {
             e.preventDefault();
             pay();
+            document.getElementById("paysystem-button").remove();
         }
+    }
+    function isEmpty(str) {
+        return (!str || 0 === str.length);
     }
 </script>

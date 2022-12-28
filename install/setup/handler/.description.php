@@ -65,9 +65,25 @@ $data = [
 				'PROVIDER_VALUE' => Loc::getMessage('SALE_PAYSELECTION_PAYMENT_DESCRIPTION_TEMPLATE'),
 			],
 		],
+        'PAYSELECTION_PAYMENT_TYPE_SYSTEM' => array(
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_TYPE_SYSTEM'),
+            'INPUT' => array(
+                'TYPE' => 'ENUM',
+                'OPTIONS' => array(
+                    '0'  => Loc::getMessage('SALE_PAYSELECTION_TYPE_SCHEME_0'),
+                    '1'  => Loc::getMessage('SALE_PAYSELECTION_TYPE_SCHEME_1'),
+                )
+            ),
+            'SORT' => 310,
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_CONNECT_SETTINGS'),
+            'DEFAULT' => array(
+                'PROVIDER_VALUE' => '0',
+                'PROVIDER_KEY' => 'INPUT'
+            )
+        ),
         'PS_CHANGE_STATUS_PAY' => [
             'NAME' => Loc::getMessage('SALE_PAYSELECTION_CHANGE_STATUS_PAY'),
-            'SORT' => 310,
+            'SORT' => 320,
             'GROUP' => Loc::getMessage('SALE_PAYSELECTION_CONNECT_SETTINGS'),
             'INPUT' => [
                 'TYPE' => 'Y/N',
@@ -78,16 +94,16 @@ $data = [
             ],
         ],
         'PAYSELECTION_RECEIPT' => array(
-            'NAME' => Loc::getMessage("SALE_PAYSELECTION_RECEIPT_NAME"),
-            'DESCRIPTION' => Loc::getMessage("SALE_PAYSELECTION_RECEIPT_DESCR"),
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_RECEIPT_NAME'),
+            'DESCRIPTION' => Loc::getMessage('SALE_PAYSELECTION_RECEIPT_DESCR'),
             'SORT' => 400,
-            'GROUP' => Loc::getMessage("SALE_PAYSELECTION_GROUP_RECEIPT"),
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),
             'INPUT' => array(
                 'TYPE' => 'Y/N'
             ),
             'DEFAULT' => array(
-                'PROVIDER_VALUE' => "N",
-                'PROVIDER_KEY' => "INPUT"
+                'PROVIDER_VALUE' => 'N',
+                'PROVIDER_KEY' => 'INPUT'
             )
         ),
         'PAYSELECTION_PAYMENT_INN' => [
@@ -108,43 +124,143 @@ $data = [
             'SORT' => 430,
             'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),
         ],
-        "PAYSELECTION_PAYMENT_TAX" => array(
-            "NAME" => Loc::getMessage("SALE_PAYSELECTION_RECEIPT_TAX_NAME"),
-            'SORT' => 440,
-            'GROUP' => Loc::getMessage("SALE_PAYSELECTION_GROUP_RECEIPT"),
+        'PAYSELECTION_PAYMENT_METHOD' => array(
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_NAME'),
+            'SORT' => 431,
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),
             'TYPE' => 'SELECT',
             'INPUT' => array(
                 'TYPE' => 'ENUM',
                 'OPTIONS' => array(
-                    "osn"  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_0'),
-                    "usn_income"  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_1'),
-                    "usn_income_outcome"  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_2'),
-                    "envd"  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_3'),
-                    "esn"  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_4'),
-                    "patent"  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_5'),
+                    'full_prepayment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_1'),
+                    'prepayment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_2'),
+                    'advance' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_3'),
+                    'full_payment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_4'),
+                    'partial_payment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_5'),
+                    'credit' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_6'),
+                    'credit_payment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_7'),
                 )
             ),
             'DEFAULT' => array(
-                "PROVIDER_VALUE" => "osn",
-                "PROVIDER_KEY" => "INPUT"
+                'PROVIDER_VALUE' => '1',
+                'PROVIDER_KEY' => 'INPUT'
             )
         ),
-        "PAYSELECTION_PAYMENT_NDS" => array(
-            "NAME" => Loc::getMessage("SALE_PAYSELECTION_NDS_NAME"),
-            "DESCRIPTION" => Loc::getMessage("SALE_PAYSELECTION_NDS_DESCR"),
-            "INPUT" => array(
+        'PAYSELECTION_PAYMENT_OBJECT' => array(
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_NAME'),
+            'SORT' => 432,
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),
+            'TYPE' => 'SELECT',
+            'INPUT' => array(
                 'TYPE' => 'ENUM',
                 'OPTIONS' => array(
-                    'none'  => Loc::getMessage("SALE_PAYSELECTION_NDS_none"),
-                    'vat0'  => Loc::getMessage("SALE_PAYSELECTION_NDS_vat0"),
-                    'vat10' => Loc::getMessage("SALE_PAYSELECTION_NDS_vat10"),
-                    'vat18' => Loc::getMessage("SALE_PAYSELECTION_NDS_vat18"),
-                    'vat110'=> Loc::getMessage("SALE_PAYSELECTION_NDS_vat110"),
-                    'vat118'=> Loc::getMessage("SALE_PAYSELECTION_NDS_vat118")
+                    'commodity' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_1'),
+                    'excise' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_2'),
+                    'job' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_3'),
+                    'service' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_4'),
+                    'gambling_bet' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_5'),
+                    'gambling_prize' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_6'),
+                    'lottery' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_7'),
+                    'lottery_prize' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_8'),
+                    'intellectual_activity' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_9'),
+                    'payment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_10'),
+                    'agent_commission' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_11'),
+                    'composite' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_12'),
+                    'award' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_13'),
                 )
             ),
-            "SORT" => 450,
-            "GROUP" => Loc::getMessage("SALE_PAYSELECTION_GROUP_RECEIPT"),
+            'DEFAULT' => array(
+                'PROVIDER_VALUE' => '1',
+                'PROVIDER_KEY' => 'INPUT'
+            )
+        ),
+        'PAYSELECTION_PAYMENT_OBJECT_DELIVERY' => array(
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_DELIVERY_NAME'),
+            'SORT' => 433,
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),
+            'TYPE' => 'SELECT',
+            'INPUT' => array(
+                'TYPE' => 'ENUM',
+                'OPTIONS' => array(
+                    'commodity' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_1'),
+                    'excise' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_2'),
+                    'job' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_3'),
+                    'service' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_4'),
+                    'gambling_bet' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_5'),
+                    'gambling_prize' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_6'),
+                    'lottery' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_7'),
+                    'lottery_prize' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_8'),
+                    'intellectual_activity' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_9'),
+                    'payment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_10'),
+                    'agent_commission' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_11'),
+                    'composite' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_12'),
+                    'award' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_OBJECT_VALUE_13'),
+                )
+            ),
+            'DEFAULT' => array(
+                'PROVIDER_VALUE' => '4',
+                'PROVIDER_KEY' => 'INPUT'
+            )
+        ),
+        'PAYSELECTION_PAYMENT_METHOD_DELIVERY' => array(
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_DELIVERY_METHOD_NAME'),
+            'SORT' => 434,
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),
+            'TYPE' => 'SELECT',
+            'INPUT' => array(
+                'TYPE' => 'ENUM',
+                'OPTIONS' => array(
+                    'full_prepayment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_1'),
+                    'prepayment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_2'),
+                    'advance' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_3'),
+                    'full_payment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_4'),
+                    'partial_payment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_5'),
+                    'credit' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_6'),
+                    'credit_payment' => GetMessage('SALE_PAYSELECTION_RECEIPT_PAYMENT_METHOD_VALUE_7'),
+                )
+            ),
+            'DEFAULT' => array(
+                'PROVIDER_VALUE' => '1',
+                'PROVIDER_KEY' => 'INPUT'
+            )
+        ),
+        'PAYSELECTION_PAYMENT_TAX' => array(
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_RECEIPT_TAX_NAME'),
+            'SORT' => 440,
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),
+            'TYPE' => 'SELECT',
+            'INPUT' => array(
+                'TYPE' => 'ENUM',
+                'OPTIONS' => array(
+                    'osn'  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_0'),
+                    'usn_income'  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_1'),
+                    'usn_income_outcome'  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_2'),
+                    'envd'  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_3'),
+                    'esn'  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_4'),
+                    'patent'  =>  GetMessage('SALE_PAYSELECTION_RECEIPT_VALUE_5'),
+                )
+            ),
+            'DEFAULT' => array(
+                'PROVIDER_VALUE' => 'osn',
+                'PROVIDER_KEY' => 'INPUT'
+            )
+        ),
+        'PAYSELECTION_PAYMENT_NDS' => array(
+            'NAME' => Loc::getMessage('SALE_PAYSELECTION_NDS_NAME'),
+            'DESCRIPTION' => Loc::getMessage('SALE_PAYSELECTION_NDS_DESCR'),
+            'INPUT' => array(
+                'TYPE' => 'ENUM',
+                'OPTIONS' => array(
+                    'none'  => Loc::getMessage('SALE_PAYSELECTION_NDS_none'),
+                    'vat0'  => Loc::getMessage('SALE_PAYSELECTION_NDS_vat0'),
+                    'vat10' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat10'),
+                    'vat18' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat18'),
+                    'vat110'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat110'),
+                    'vat118'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat118')
+                )
+            ),
+            'SORT' => 450,
+            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),
         ),
 		'PAYSELECTION_NOTIFICATION_URL' => [
 			'NAME' => Loc::getMessage('SALE_PAYSELECTION_NOTIFICATION_URL'),
