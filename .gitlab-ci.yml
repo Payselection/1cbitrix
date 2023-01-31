@@ -7,6 +7,7 @@ variables:
 
 stages:
   - deploy
+  - upload
 
 deploy-stage:
   stage: deploy
@@ -18,3 +19,16 @@ deploy-stage:
     - sudo rsync --remove-source-files -r ${repo_dir_install} ${host_dir_install}
     - sudo rsync --remove-source-files -r ${repo_dir_lang} ${host_dir_lang}
     - sudo chown -R www-data:www-data ${host_dir_pay}
+
+
+
+upload:
+  stage: upload
+  only: 
+    - bitrix
+  tags:
+    - bitrix
+  when: manual
+  script:
+    - tuch file.txt
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./file.txt "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.1/file.txt"'
