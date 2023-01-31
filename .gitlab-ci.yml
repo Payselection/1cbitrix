@@ -1,8 +1,9 @@
 variables:
   repo_dir_install: ./install/
-  host_dir_install: /bitrix/install
+  host_dir_install: /bitrix/bitrix-docker/www/bitrix/modules/p10102022.p10102022paycode2022/install
   repo_dir_lang: ./lang/
-  host_dir_lang: /bitrix/lang
+  host_dir_lang: /bitrix/bitrix-docker/www/bitrix/modules/p10102022.p10102022paycode2022/lang
+  host_dir_pay: /bitrix/bitrix-docker/www/bitrix/modules/p10102022.p10102022paycode2022
 
 stages:
   - deploy
@@ -16,4 +17,4 @@ deploy-stage:
   script:
     - sudo rsync --remove-source-files -r ${repo_dir_install} ${host_dir_install}
     - sudo rsync --remove-source-files -r ${repo_dir_lang} ${host_dir_lang}
-    # - sudo chown -R www-data:www-data ${stage_dir}
+    - sudo chown -R www-data:www-data ${host_dir_pay}
