@@ -22,13 +22,13 @@ deploy-stage:
 
 
 
-upload:
-  stage: upload
-  only: 
-    - bitrix
-  tags:
-    - bitrix
-  when: manual
-  script:
-    - tuch file.txt
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./file.txt "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.1/file.txt"'
+# upload:
+#   stage: upload
+#   only: 
+#     - bitrix
+#   tags:
+#     - bitrix
+#   when: manual
+#   script:
+#     - tuch file.txt
+#     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./file.txt "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.1/file.txt"'
