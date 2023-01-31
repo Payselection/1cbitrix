@@ -1,0 +1,19 @@
+variables:
+  repo_dir_install: ./install/
+  host_dir_install: /bitrix/install
+  repo_dir_lang: ./lang/
+  host_dir_lang: /bitrix/lang
+
+stages:
+  - deploy
+
+deploy-stage:
+  stage: deploy
+  only: 
+    - bitrix
+  tags:
+    - bitrix
+  script:
+    - sudo rsync --remove-source-files -r ${repo_dir_install} ${host_dir_install}
+    - sudo rsync --remove-source-files -r ${repo_dir_lang} ${host_dir_lang}
+    # - sudo chown -R www-data:www-data ${stage_dir}
