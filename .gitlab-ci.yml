@@ -22,13 +22,27 @@ deploy-stage:
 
 
 
-# upload:
-#   stage: upload
-#   only: 
-#     - bitrix
-#   tags:
-#     - bitrix
-#   when: manual
-#   script:
-#     - tuch file.txt
-#     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./file.txt "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/my_package/0.0.1/file.txt"'
+upload module:
+  stage: upload
+  tags:
+    - bitrix
+  when: manual
+  script:
+    - export VERSION=$(head -3 ./install/version.php | tail +3 | awk '{ print $3 }' | awk '{print substr($0, 2, length($0) -3) }')
+    - mkdir $VERSION
+    - rsync --remove-source-files -r ./install ./$VERSION
+    - rsync --remove-source-files -r ./lang ./$VERSION
+    - cp include.php ./$VERSION
+    - export TEMP_PATH=$(pwd)
+    - cd $TEMP_PATH/$VERSION/install/setup/handler/lang/ru
+    - iconv  -f UTF-8 -t WINDOWS-1251 handler.php -o handler.php
+    - iconv  -f UTF-8 -t WINDOWS-1251 .description.php -o .description.php
+    - cd $TEMP_PATH/$VERSION/lang/ru/install
+    - iconv  -f UTF-8 -t WINDOWS-1251 index.php -o index.php
+    - file -i index.php
+    - cd $TEMP_PATH
+    - zip -r PayCode.$VERSION.zip ./$VERSION/*
+    - ls -la
+  artifacts:
+    paths:
+      - PayCode*
