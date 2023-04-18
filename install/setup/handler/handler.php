@@ -284,6 +284,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $url = $this->getUrl($payment, 'getPaymentStatus');
         $headers = $this->getHeaders($payment, '', $url, 'GET');
         PaySystem\Logger::addDebugInfo(__CLASS__ . ':getPayselectionPayment url: ' . $url);
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ':getPayselectionPayment header: ' . implode(", ", $headers));
 
         $sendResult = $this->send(self::SEND_METHOD_HTTP_GET, $url, [], $headers);
         if ($sendResult->isSuccess()) {
@@ -332,7 +333,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                         $type_system = 'refund';
                         break;
                     case self::STATUS_PREAUTORIZED_CODE:
-                        $type_sytem = 'cancel';
+                        $type_system = 'cancel';
                         break;
                     case self::STATUS_VOIDED_CODE:
                         $result->addError(
@@ -345,10 +346,10 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             }
         } else
         {
-            $result->addErrors($sendResult->getErrors());
+            $result->addErrors($payselectionPaymentResult->getErrors());
             return $result;
         }
-        PaySystem\Logger::addDebugInfo(__CLASS__ . ':refund: ' . $type_type);
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ':refund: ' . $type_system);
         $url = $this->getUrl($payment, $type_system);
         $params = [
             'TransactionId' => $payment->getField('PS_INVOICE_ID'),
@@ -395,12 +396,15 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     {
         $result = new ServiceResult();
 
-        $httpClient = new HttpClient();
+        $httpClient = new HttpClient(array(
+            'version' => HttpClient::HTTP_1_1,
+        ));
         foreach ($headers as $name => $value) {
             $httpClient->setHeader($name, $value);
         }
 
         if ($method === self::SEND_METHOD_HTTP_GET) {
+            PaySystem\Logger::addDebugInfo(__CLASS__ . ': request headers: ' . static::encode($headers));
             $response = $httpClient->get($url);
         } else {
             $postData = null;
@@ -423,6 +427,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         }
 
         PaySystem\Logger::addDebugInfo(__CLASS__ . ': response data: ' . $response);
+        PaySystem\Logger::addDebugInfo(__CLASS__ . ': response status: ' . $httpClient->getStatus());
 
         $response = static::decode($response);
         if ($response) {
@@ -450,7 +455,9 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     {
         $result = new ServiceResult();
 
-        $httpClient = new HttpClient();
+        $httpClient = new HttpClient(array(
+            'version' => HttpClient::HTTP_1_1,
+        ));
         foreach ($headers as $name => $value) {
             $httpClient->setHeader($name, $value);
         }
@@ -864,7 +871,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
      * @return mixed
      * @throws Main\ArgumentException
      */
-    private static function encode(array $data)
+    private static function encode(array $data): mixed
     {
         return Main\Web\Json::encode($data, JSON_UNESCAPED_UNICODE);
     }
@@ -873,7 +880,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
      * @param string $data
      * @return mixed
      */
-    private static function decode(string $data)
+    private static function decode(string $data): mixed
     {
         try {
             return Main\Web\Json::decode($data);

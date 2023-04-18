@@ -7,7 +7,7 @@ Loc::loadMessages(__FILE__);
 class p10102022_p10102022paycode2022 extends CModule
 {
 
-    var $MODULE_ID = "p10102022.p10102022paycode2022";
+    var string $MODULE_ID = "p10102022.p10102022paycode2022";
     public $MODULE_VERSION;
     public $MODULE_VERSION_DATE;
     public $MODULE_NAME;

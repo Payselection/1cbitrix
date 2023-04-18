@@ -254,9 +254,9 @@ $data = [
                     'none'  => Loc::getMessage('SALE_PAYSELECTION_NDS_none'),
                     'vat0'  => Loc::getMessage('SALE_PAYSELECTION_NDS_vat0'),
                     'vat10' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat10'),
-                    'vat18' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat18'),
+                    'vat20' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat20'),
                     'vat110'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat110'),
-                    'vat118'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat118')
+                    'vat120'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat120')
                 )
             ),
             'SORT' => 450,

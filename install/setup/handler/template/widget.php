@@ -75,7 +75,7 @@ $sum = round($params['sum'], 2);
         );
     };
 
-    var a = document.getElementById('paysystem-button-pay');
+    let a = document.getElementById('paysystem-button-pay');
     if (a) {
         a.onclick = function (e) {
             e.preventDefault();
