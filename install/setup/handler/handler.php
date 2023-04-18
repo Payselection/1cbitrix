@@ -871,7 +871,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
      * @return mixed
      * @throws Main\ArgumentException
      */
-    private static function encode(array $data): mixed
+    private static function encode(array $data)
     {
         return Main\Web\Json::encode($data, JSON_UNESCAPED_UNICODE);
     }
@@ -880,7 +880,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
      * @param string $data
      * @return mixed
      */
-    private static function decode(string $data): mixed
+    private static function decode(string $data)
     {
         try {
             return Main\Web\Json::decode($data);
