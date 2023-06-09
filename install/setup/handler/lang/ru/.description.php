@@ -29,7 +29,7 @@ $MESS["SALE_PAYSELECTION_GROUP_RECEIPT"] = "Отправка чеков";
 $MESS["SALE_PAYSELECTION_RECEIPT_NAME"] = "Чек выпускает Payselection";
 $MESS["SALE_PAYSELECTION_RECEIPT_DESCR"] = "Если отмечено, то сформирует и отправит клиенту чек через Payselection";
 $MESS["SALE_PAYSELECTION_PAYMENT_INN"] = "ИНН организации";
-$MESS["SALE_PAYSELECTION_PAYMENT_ADDRESS"] = "Юридический адрес";
+$MESS["SALE_PAYSELECTION_PAYMENT_ADDRESS"] = "Место расчетов. Адрес сайта";
 $MESS["SALE_PAYSELECTION_PAYMENT_EMAIL"] = "Email организации";
 
 $MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_DELIVERY_METHOD_NAME"] = 'Тип оплаты для доставки';
