@@ -15,6 +15,9 @@ use Bitrix\Main,
     Bitrix\Sale\PaySystem\ServiceResult,
     Bitrix\Sale\PaymentCollection,
     Bitrix\Sale\PriceMaths;
+use Bitrix\Sale\Delivery\Services\Manager;
+use Bitrix\Sale\Delivery\Services\Base;
+use Bitrix\Catalog\VatTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -145,7 +148,6 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         if ($this->getBusinessValue($payment, 'PAYSELECTION_RECEIPT') == 'Y') {
             $params['ReceiptData'] = $this->getReceiptData($payment);
         }
-        $params['ReceiptData'] = $this->getReceiptData($payment);
         $params['sum'] = (string)($this->roundNumber($payment->getSum()));
         $params['currency'] = $payment->getField('CURRENCY');
         $params['payment_type'] = ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'Block' : 'Pay');
@@ -239,45 +241,47 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
 
     private function getVatType($BasketItem, $payment): string
     {
-
+        $basketItemVatRate = $BasketItem->getField('VAT_RATE');
+        $basketItemVatRateIncluded = $BasketItem->getField('VAT_INCLUDED');
+        $basketItemVatRateAsIncludeType = $basketItemVatRateIncluded === 'Y' ? $basketItemVatRate + 1 : $basketItemVatRate;
+        $vatRateForError = $basketItemVatRate * 100 . '%';
         $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
+        $errorMessage = " VAT type for the $vatRateForError given rate does not exist.";
         $vatType = 'none';
         if ($paySelectionType === null) {
-            if ($BasketItem->getField('VAT_RATE') === null) {
+            if ($basketItemVatRate === null) {
                 return $vatType;
-            } else if (floatval($BasketItem->getField('VAT_RATE')) == 0) {
-                $vatType = 'vat0';
-                return $vatType;
+            } else if (floatval($basketItemVatRate) == 0) {
+                return 'vat0';
             } else {
-                $vatRate = $BasketItem->getField('VAT_RATE');
-                $vatType = array_search($vatRate + 1, self::VAT_VALUES, true);
+
+                $vatType = array_search($basketItemVatRateAsIncludeType, self::VAT_VALUES, true);
                 if ($vatType === false) {
-                    PaySystem\Logger::addDebugInfo(__CLASS__ . " VAT type for the $vatRate given rate does not exist.");
-                    return throw new Exception("VAT type for the $vatRate given rate does not exist.");
+                    PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
+                    return throw new Exception($errorMessage);
                 }
                 return $vatType;
             }
         } else {
-            $vatType = $paySelectionType;
-            return $vatType;
+            return $paySelectionType;
         }
 
     }
 
-    private function getVatSumForPayselection($vatType, $finalPrice, $paySelectionVatValue): float
-    {
-        if ($vatType === 'vat110' || $vatType === 'vat120') {
-            return $this->getNetPrice($finalPrice, $paySelectionVatValue);
-        } else {
-            return round($finalPrice * $paySelectionVatValue, 2);
-        }
-    }
-
-    private function getNetPrice($price, $vat)
-    {
-        $total = $price - ($price / $vat);
-        return round($total, 2);
-    }
+//    private function getVatSumForPayselection($vatType, $finalPrice, $paySelectionVatValue): float
+//    {
+//        if ($vatType === 'vat110' || $vatType === 'vat120') {
+//            return $this->getNetPrice($finalPrice, $paySelectionVatValue);
+//        } else {
+//            return round($finalPrice * $paySelectionVatValue, 2);
+//        }
+//    }
+//
+//    private function getNetPrice($price, $vat)
+//    {
+//        $total = $price - ($price / $vat);
+//        return round($total, 2);
+//    }
 
 //    private function getVatSum($BasketItem, $payment): string
 //    {
@@ -299,6 +303,52 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
 //        return $this->roundNumber($vatSum);
 //    }
 
+
+    private function getDeliveryVatType($BasketItem, $payment)
+    {
+        $basketItemDeliveryId = $BasketItem->getField('DELIVERY_ID');
+        $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
+        // Получение типа НДС доставки
+        $deliveryVatType = 'none';
+        if ($paySelectionType === null) {
+            if (!empty($basketItemDeliveryId)) {
+                $deliveryService = Manager::getObjectById($basketItemDeliveryId);
+                if ($deliveryService) {
+                    $deliveryVatId = $deliveryService->getVatId();
+
+                    if (!empty($deliveryVatId)) {
+                        $vatInfo = VatTable::getList(array(
+                            'filter' => array('=ID' => $deliveryVatId),
+                            'select' => array('NAME', 'RATE')
+                        ))->fetch();
+                        if ($vatInfo) {
+                            $permittedRate = $vatInfo['RATE'];
+                            $errorMessage = "VAT type for the delivery with rate $permittedRate does not permitted.";
+                            // Получение типа НДС на основе наименования ставки
+                            // Здесь вам нужно адаптировать код в соответствии с вашей структурой налоговых ставок
+                            if ($vatInfo['NAME'] === 'Без НДС') {
+                                $deliveryVatType = 'none';
+                            } elseif ($vatInfo['NAME'] === 'НДС 0%') {
+                                $deliveryVatType = 'vat0';
+                            } elseif ($vatInfo['NAME'] === 'НДС 10%') {
+                                $deliveryVatType = 'vat110';
+                            } elseif ($vatInfo['NAME'] === 'НДС 20%') {
+                                $deliveryVatType = 'vat120';
+                            } else {
+                                PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
+                                throw new Exception($errorMessage);
+                            }
+                        }
+
+                    }
+                }
+            }
+        } else {
+            return $paySelectionType;
+        }
+
+        return $deliveryVatType;
+    }
 
     private function setFFDParams(Payment $payment): array
     {
@@ -333,7 +383,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'payment_method' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_METHOD_DELIVERY'),
                 'payment_object' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_OBJECT_DELIVERY'),
                 'vat' => [
-                    'type' => $this->getVatType($BasketItem, $payment),
+                    'type' => (string)$this->getDeliveryVatType($order, $payment),
                 ]
             );
         }
