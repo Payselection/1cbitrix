@@ -15,6 +15,9 @@ use Bitrix\Main,
     Bitrix\Sale\PaySystem\ServiceResult,
     Bitrix\Sale\PaymentCollection,
     Bitrix\Sale\PriceMaths;
+use Bitrix\Sale\Delivery\Services\Manager;
+use Bitrix\Sale\Delivery\Services\Base;
+use Bitrix\Catalog\VatTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -36,6 +39,15 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
 
     private const SEND_METHOD_HTTP_POST = "POST";
     private const SEND_METHOD_HTTP_GET = "GET";
+
+    private const VAT_VALUES = [
+        'none' => 0,
+        'vat0' => 0,
+        'vat10' => 0.1,
+        'vat20' => 0.2,
+        'vat110' => 1.1,
+        'vat120' => 1.2,
+    ];
 
     /**
      * @return array
@@ -133,12 +145,13 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'Language' => LANGUAGE_ID,
             ],
         ];
-        if ($this->getBusinessValue($payment, 'PAYSELECTION_RECEIPT')  == 'Y') {
+        if ($this->getBusinessValue($payment, 'PAYSELECTION_RECEIPT') == 'Y') {
             $params['ReceiptData'] = $this->getReceiptData($payment);
         }
         $params['sum'] = (string)($this->roundNumber($payment->getSum()));
         $params['currency'] = $payment->getField('CURRENCY');
         $params['payment_type'] = ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'Block' : 'Pay');
+
 
         return $params;
     }
@@ -180,7 +193,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'Language' => LANGUAGE_ID,
             ],
         ];
-        if ($this->getBusinessValue($payment, 'PAYSELECTION_RECEIPT')  == 'Y') {
+        if ($this->getBusinessValue($payment, 'PAYSELECTION_RECEIPT') == 'Y') {
             $params['ReceiptData'] = $this->getReceiptData($payment);
         }
         $postData = static::encode($params);
@@ -226,6 +239,119 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         ];
     }
 
+    private function getVatType($BasketItem, $payment): string
+    {
+        $basketItemVatRate = $BasketItem->getField('VAT_RATE');
+        $basketItemVatRateIncluded = $BasketItem->getField('VAT_INCLUDED');
+        $basketItemVatRateAsIncludeType = $basketItemVatRateIncluded === 'Y' ? $basketItemVatRate + 1 : $basketItemVatRate;
+        $vatRateForError = $basketItemVatRate * 100 . '%';
+        $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
+        $errorMessage = " VAT type for the $vatRateForError given rate does not exist.";
+        $vatType = 'none';
+        if ($paySelectionType === null) {
+            if ($basketItemVatRate === null) {
+                return $vatType;
+            } else if (floatval($basketItemVatRate) == 0) {
+                return 'vat0';
+            } else {
+
+                $vatType = array_search($basketItemVatRateAsIncludeType, self::VAT_VALUES, true);
+                if ($vatType === false) {
+                    PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
+                    return throw new Exception($errorMessage);
+                }
+                return $vatType;
+            }
+        } else {
+            return $paySelectionType;
+        }
+
+    }
+
+//    private function getVatSumForPayselection($vatType, $finalPrice, $paySelectionVatValue): float
+//    {
+//        if ($vatType === 'vat110' || $vatType === 'vat120') {
+//            return $this->getNetPrice($finalPrice, $paySelectionVatValue);
+//        } else {
+//            return round($finalPrice * $paySelectionVatValue, 2);
+//        }
+//    }
+//
+//    private function getNetPrice($price, $vat)
+//    {
+//        $total = $price - ($price / $vat);
+//        return round($total, 2);
+//    }
+
+//    private function getVatSum($BasketItem, $payment): string
+//    {
+//        $vatType = $this->getVatType($BasketItem, $payment);
+//        $paySelectionVatValue = 0;
+//        if ($vatType !== null) {
+//            if (!isset(self::VAT_VALUES[$vatType])) {
+//                PaySystem\Logger::addDebugInfo(__CLASS__ . " VAT value does not exist.");
+//            }
+//            $paySelectionVatValue = self::VAT_VALUES[$vatType];
+//        }
+//
+//        $finalPrice = $BasketItem->getPrice();
+//
+//        $vatSum = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS') !== null
+//            ? $this->getVatSumForPayselection($vatType, $finalPrice, $paySelectionVatValue)
+//            : ((floatval($BasketItem->getField('VAT_RATE')) == 0 || $BasketItem->getField('VAT_RATE') === null) ? 0 : $this->getNetPrice($finalPrice, $paySelectionVatValue + 1));
+//
+//        return $this->roundNumber($vatSum);
+//    }
+
+
+    private function getDeliveryVatType($BasketItem, $payment)
+    {
+        $basketItemDeliveryId = $BasketItem->getField('DELIVERY_ID');
+        $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
+        // Получение типа НДС доставки
+        $deliveryVatType = 'none';
+        if ($paySelectionType === null) {
+            if (!empty($basketItemDeliveryId)) {
+                $deliveryService = Manager::getObjectById($basketItemDeliveryId);
+                if ($deliveryService) {
+                    $deliveryVatId = $deliveryService->getVatId();
+
+                    if (!empty($deliveryVatId)) {
+                        $vatInfo = VatTable::getList(array(
+                            'filter' => array('=ID' => $deliveryVatId),
+                            'select' => array('NAME', 'RATE')
+                        ))->fetch();
+                        if ($vatInfo) {
+                            $permittedRate = $vatInfo['RATE'];
+                            $errorMessage = "VAT type for the delivery with rate $permittedRate does not permitted.";
+                            // Получение типа НДС на основе наименования ставки
+                            if ($vatInfo['NAME'] === 'Без НДС') {
+                                $deliveryVatType = 'none';
+                            } elseif ($vatInfo['NAME'] === 'НДС 0%') {
+                                $deliveryVatType = 'vat0';
+                            } elseif ($vatInfo['NAME'] === 'НДС 10%') {
+                                $deliveryVatType = 'vat10';
+                            } elseif ($vatInfo['NAME'] === 'НДС 20%') {
+                                $deliveryVatType = 'vat20';
+                            } elseif ($vatInfo['NAME'] === 'НДС 10/110') {
+                                $deliveryVatType = 'vat110';
+                            } elseif ($vatInfo['NAME'] === 'НДС 20/120') {
+                                $deliveryVatType = 'vat120';
+                            }else {
+                                PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
+                                throw new Exception($errorMessage);
+                            }
+                        }
+
+                    }
+                }
+            }
+        } else {
+            return $paySelectionType;
+        }
+
+        return $deliveryVatType;
+    }
 
     private function setFFDParams(Payment $payment): array
     {
@@ -241,11 +367,12 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'name' => str_replace("\n", "", mb_substr($BasketItem->getField('NAME'), 0, 120)),
                 'sum' => $BasketItem->getFinalPrice(),
                 'price' => $BasketItem->getPrice(),
-                'quantity' =>  $BasketItem->getQuantity(),
+                'quantity' => $BasketItem->getQuantity(),
                 'payment_method' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_METHOD'),
                 'payment_object' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_OBJECT'),
                 'vat' => [
-                    'type' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS'),
+                    'type' => $this->getVatType($BasketItem, $payment),
+//                    'sum' => $this->getVatSum($BasketItem, $payment)
                 ]
             );
         }
@@ -259,7 +386,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'payment_method' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_METHOD_DELIVERY'),
                 'payment_object' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_OBJECT_DELIVERY'),
                 'vat' => [
-                    'type' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS'),
+                    'type' => (string)$this->getDeliveryVatType($order, $payment),
                 ]
             );
         }
@@ -312,8 +439,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $result = new ServiceResult();
         $type_system = ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'cancel' : 'refund');
         $payselectionPaymentResult = $this->getPayselectionPayment($payment);
-        if ($payselectionPaymentResult->isSuccess())
-        {
+        if ($payselectionPaymentResult->isSuccess()) {
             $payselectionPaymentData = $payselectionPaymentResult->getData();
             if (!empty($payselectionPaymentData['Code'])) {
                 $result->addError(
@@ -325,10 +451,8 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                         )
                     )
                 );
-            } else
-            {
-                switch ($payselectionPaymentData['TransactionState'])
-                {
+            } else {
+                switch ($payselectionPaymentData['TransactionState']) {
                     case self::STATUS_SUCCESSFUL_CODE:
                         $type_system = 'refund';
                         break;
@@ -344,8 +468,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                         break;
                 }
             }
-        } else
-        {
+        } else {
             $result->addErrors($payselectionPaymentResult->getErrors());
             return $result;
         }
@@ -360,20 +483,16 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $postData = static::encode($params);
         $headers = $this->getHeaders($payment, $postData, $url);
         $sendResult = $this->send(self::SEND_METHOD_HTTP_POST, $url, $params, $headers);
-        if (!$sendResult->isSuccess())
-        {
+        if (!$sendResult->isSuccess()) {
             $result->addErrors($sendResult->getErrors());
             return $result;
         }
 
         $refundData = $sendResult->getData();
         $verifyResponseResult = $this->verifyResponse($refundData);
-        if ($verifyResponseResult->isSuccess())
-        {
+        if ($verifyResponseResult->isSuccess()) {
             $payment->setField('PS_STATUS_DESCRIPTION', $this->roundNumber($refundableSum));
-        }
-        else
-        {
+        } else {
             $result->addErrors($verifyResponseResult->getErrors());
         }
 
@@ -499,8 +618,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     {
         $result = new ServiceResult();
 
-        if (!empty($response['Code']))
-        {
+        if (!empty($response['Code'])) {
             $result->addError(PaySystem\Error::create($response['Description']));
         }
 
@@ -565,8 +683,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                     $payselectionPaymentData['TransactionState'] === self::STATUS_PREAUTORIZED_CODE ||
                     $payselectionPaymentData['TransactionState'] === self::STATUS_VOIDED_CODE) {
                     if ($data['Event'] === 'Refund' || $data['Event'] === 'Cancel') {
-                        if (PriceMaths::roundPrecision($payselectionPaymentData['StateDetails']['ProcessingAmount']) === PriceMaths::roundPrecision($payment->getField('PS_STATUS_DESCRIPTION')))
-                        {
+                        if (PriceMaths::roundPrecision($payselectionPaymentData['StateDetails']['ProcessingAmount']) === PriceMaths::roundPrecision($payment->getField('PS_STATUS_DESCRIPTION'))) {
                             $result->setOperationType(PaySystem\ServiceResult::MONEY_LEAVING);
                             PaySystem\Logger::addDebugInfo(__CLASS__ . ':processRequest MONEY_LEAVING: ' . $payment->getField('PS_STATUS_DESCRIPTION'));
                         }
@@ -766,16 +883,16 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
      * @param string $body
      * @return array
      */
-    private function getHeaders(Payment $payment, string $body='', string $url='', string $method='POST'): array
+    private function getHeaders(Payment $payment, string $body = '', string $url = '', string $method = 'POST'): array
     {
         $secretKey = $this->getBusinessValue($payment, 'PAYSELECTION_SECRET_KEY');
         $uid = $this->getIdempotenceKey();
         $site_id = $this->getBusinessValue($payment, 'PAYSELECTION_SITE_ID');
         $path = parse_url($url, PHP_URL_PATH);
-        $msg = $method.PHP_EOL.
-            $path.PHP_EOL.
-            $site_id.PHP_EOL.
-            $uid.PHP_EOL.
+        $msg = $method . PHP_EOL .
+            $path . PHP_EOL .
+            $site_id . PHP_EOL .
+            $uid . PHP_EOL .
             $body;
         return [
             'Content-Type' => 'application/json',
@@ -893,4 +1010,5 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     {
         return number_format($num, 2, '.', '');
     }
+
 }
