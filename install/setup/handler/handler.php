@@ -325,16 +325,19 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                             $permittedRate = $vatInfo['RATE'];
                             $errorMessage = "VAT type for the delivery with rate $permittedRate does not permitted.";
                             // Получение типа НДС на основе наименования ставки
-                            // Здесь вам нужно адаптировать код в соответствии с вашей структурой налоговых ставок
                             if ($vatInfo['NAME'] === 'Без НДС') {
                                 $deliveryVatType = 'none';
                             } elseif ($vatInfo['NAME'] === 'НДС 0%') {
                                 $deliveryVatType = 'vat0';
                             } elseif ($vatInfo['NAME'] === 'НДС 10%') {
-                                $deliveryVatType = 'vat110';
+                                $deliveryVatType = 'vat10';
                             } elseif ($vatInfo['NAME'] === 'НДС 20%') {
+                                $deliveryVatType = 'vat20';
+                            } elseif ($vatInfo['NAME'] === 'НДС 10/110') {
+                                $deliveryVatType = 'vat110';
+                            } elseif ($vatInfo['NAME'] === 'НДС 20/120') {
                                 $deliveryVatType = 'vat120';
-                            } else {
+                            }else {
                                 PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
                                 throw new Exception($errorMessage);
                             }
