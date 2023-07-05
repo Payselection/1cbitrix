@@ -258,7 +258,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 $vatType = array_search($basketItemVatRateAsIncludeType, self::VAT_VALUES, true);
                 if ($vatType === false) {
                     PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
-                    ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_VAT'));
+                    ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_GENERAL'));
                     die();
                 }
                 return $vatType;
@@ -340,7 +340,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                                 $deliveryVatType = 'vat120';
                             } else {
                                 PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
-                                ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_VAT'));
+                                ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_GENERAL'));
                                 die();
 
                             }
