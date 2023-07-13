@@ -242,8 +242,6 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     private function getVatType($BasketItem, $payment): string
     {
         $basketItemVatRate = $BasketItem->getField('VAT_RATE');
-        $basketItemVatRateIncluded = $BasketItem->getField('VAT_INCLUDED');
-        $basketItemVatRateAsIncludeType = $basketItemVatRateIncluded === 'Y' ? $basketItemVatRate + 1 : $basketItemVatRate;
         $vatRateForError = $basketItemVatRate * 100 . '%';
         $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
         $errorMessage = " VAT type for the $vatRateForError given rate does not exist.";
@@ -254,8 +252,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             } else if (floatval($basketItemVatRate) == 0) {
                 return 'vat0';
             } else {
-
-                $vatType = array_search($basketItemVatRateAsIncludeType, self::VAT_VALUES, true);
+                $vatType = array_search($basketItemVatRate, self::VAT_VALUES, true);
                 if ($vatType === false) {
                     PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
                     ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_GENERAL'));
