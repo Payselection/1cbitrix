@@ -142,7 +142,7 @@ $data = [
                 )
             ),
             'DEFAULT' => array(
-                'PROVIDER_VALUE' => '1',
+                'PROVIDER_VALUE' => 'full_prepayment',
                 'PROVIDER_KEY' => 'INPUT'
             )
         ),
@@ -170,7 +170,7 @@ $data = [
                 )
             ),
             'DEFAULT' => array(
-                'PROVIDER_VALUE' => '1',
+                'PROVIDER_VALUE' => 'commodity',
                 'PROVIDER_KEY' => 'INPUT'
             )
         ),
@@ -198,7 +198,7 @@ $data = [
                 )
             ),
             'DEFAULT' => array(
-                'PROVIDER_VALUE' => '4',
+                'PROVIDER_VALUE' => 'service',
                 'PROVIDER_KEY' => 'INPUT'
             )
         ),
@@ -220,7 +220,7 @@ $data = [
                 )
             ),
             'DEFAULT' => array(
-                'PROVIDER_VALUE' => '1',
+                'PROVIDER_VALUE' => 'full_prepayment',
                 'PROVIDER_KEY' => 'INPUT'
             )
         ),
@@ -254,10 +254,14 @@ $data = [
                     'none'  => Loc::getMessage('SALE_PAYSELECTION_NDS_none'),
                     'vat0'  => Loc::getMessage('SALE_PAYSELECTION_NDS_vat0'),
                     'vat10' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat10'),
-                    'vat18' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat18'),
+                    'vat20' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat20'),
                     'vat110'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat110'),
-                    'vat118'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat118')
+                    'vat120'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat120')
                 )
+            ),
+            'DEFAULT' => array(
+                'PROVIDER_VALUE' => 'none',
+                'PROVIDER_KEY' => 'INPUT'
             ),
             'SORT' => 450,
             'GROUP' => Loc::getMessage('SALE_PAYSELECTION_GROUP_RECEIPT'),

@@ -29,7 +29,7 @@ $MESS["SALE_PAYSELECTION_GROUP_RECEIPT"] = "Отправка чеков";
 $MESS["SALE_PAYSELECTION_RECEIPT_NAME"] = "Чек выпускает Payselection";
 $MESS["SALE_PAYSELECTION_RECEIPT_DESCR"] = "Если отмечено, то сформирует и отправит клиенту чек через Payselection";
 $MESS["SALE_PAYSELECTION_PAYMENT_INN"] = "ИНН организации";
-$MESS["SALE_PAYSELECTION_PAYMENT_ADDRESS"] = "Юридический адрес";
+$MESS["SALE_PAYSELECTION_PAYMENT_ADDRESS"] = "Место расчетов. Адрес сайта";
 $MESS["SALE_PAYSELECTION_PAYMENT_EMAIL"] = "Email организации";
 
 $MESS["SALE_PAYSELECTION_RECEIPT_PAYMENT_DELIVERY_METHOD_NAME"] = 'Тип оплаты для доставки';
@@ -71,6 +71,6 @@ $MESS["SALE_PAYSELECTION_NDS_DESCR"] = "Обязательно укажите, �
 $MESS["SALE_PAYSELECTION_NDS_none"] = "без НДС";
 $MESS["SALE_PAYSELECTION_NDS_vat0"] = "НДС по ставке 0%";
 $MESS["SALE_PAYSELECTION_NDS_vat10"] = "НДС чека по ставке 10%";
-$MESS["SALE_PAYSELECTION_NDS_vat18"] = "НДС чека по ставке 18%";
+$MESS["SALE_PAYSELECTION_NDS_vat20"] = "НДС чека по ставке 20%";
 $MESS["SALE_PAYSELECTION_NDS_vat110"] = "НДС чека по расчетной ставке 10/110";
-$MESS["SALE_PAYSELECTION_NDS_vat118"]  = "НДС чека по расчетной ставке 18/118";
+$MESS["SALE_PAYSELECTION_NDS_vat120"]  = "НДС чека по расчетной ставке 20/120";
