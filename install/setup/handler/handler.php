@@ -265,44 +265,8 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         }
 
     }
-
-//    private function getVatSumForPayselection($vatType, $finalPrice, $paySelectionVatValue): float
-//    {
-//        if ($vatType === 'vat110' || $vatType === 'vat120') {
-//            return $this->getNetPrice($finalPrice, $paySelectionVatValue);
-//        } else {
-//            return round($finalPrice * $paySelectionVatValue, 2);
-//        }
-//    }
-//
-//    private function getNetPrice($price, $vat)
-//    {
-//        $total = $price - ($price / $vat);
-//        return round($total, 2);
-//    }
-
-//    private function getVatSum($BasketItem, $payment): string
-//    {
-//        $vatType = $this->getVatType($BasketItem, $payment);
-//        $paySelectionVatValue = 0;
-//        if ($vatType !== null) {
-//            if (!isset(self::VAT_VALUES[$vatType])) {
-//                PaySystem\Logger::addDebugInfo(__CLASS__ . " VAT value does not exist.");
-//            }
-//            $paySelectionVatValue = self::VAT_VALUES[$vatType];
-//        }
-//
-//        $finalPrice = $BasketItem->getPrice();
-//
-//        $vatSum = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS') !== null
-//            ? $this->getVatSumForPayselection($vatType, $finalPrice, $paySelectionVatValue)
-//            : ((floatval($BasketItem->getField('VAT_RATE')) == 0 || $BasketItem->getField('VAT_RATE') === null) ? 0 : $this->getNetPrice($finalPrice, $paySelectionVatValue + 1));
-//
-//        return $this->roundNumber($vatSum);
-//    }
-
-
     private function getDeliveryVatType($BasketItem, $payment)
+
     {
         $basketItemDeliveryId = $BasketItem->getField('DELIVERY_ID');
         $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
