@@ -1,0 +1,48 @@
+variables:
+  repo_dir_install: ./install/
+  host_dir_install: /bitrix/bitrix-docker/www/bitrix/modules/p10102022.p10102022paycode2022/install
+  repo_dir_lang: ./lang/
+  host_dir_lang: /bitrix/bitrix-docker/www/bitrix/modules/p10102022.p10102022paycode2022/lang
+  host_dir_pay: /bitrix/bitrix-docker/www/bitrix/modules/p10102022.p10102022paycode2022
+
+stages:
+  - deploy
+  - upload
+
+deploy-stage:
+  stage: deploy
+  only: 
+    - bitrix
+  tags:
+    - bitrix
+  script:
+    - sudo rsync --remove-source-files -r ${repo_dir_install} ${host_dir_install}
+    - sudo rsync --remove-source-files -r ${repo_dir_lang} ${host_dir_lang}
+    - sudo chown -R www-data:www-data ${host_dir_pay}
+
+
+
+upload module:
+  stage: upload
+  tags:
+    - bitrix
+  when: manual
+  script:
+    - export VERSION=$(head -3 ./install/version.php | tail +3 | awk '{ print $3 }' | awk '{print substr($0, 2, length($0) -3) }')
+    - mkdir $VERSION
+    - rsync --remove-source-files -r ./install ./$VERSION
+    - rsync --remove-source-files -r ./lang ./$VERSION
+    - cp include.php ./$VERSION
+    - export TEMP_PATH=$(pwd)
+    - cd $TEMP_PATH/$VERSION/install/setup/handler/lang/ru
+    - iconv  -f UTF-8 -t WINDOWS-1251 handler.php -o handler.php
+    - iconv  -f UTF-8 -t WINDOWS-1251 .description.php -o .description.php
+    - cd $TEMP_PATH/$VERSION/lang/ru/install
+    - iconv  -f UTF-8 -t WINDOWS-1251 index.php -o index.php
+    - file -i index.php
+    - cd $TEMP_PATH
+    - zip -r PayCode.$VERSION.zip ./$VERSION/*
+    - ls -la
+  artifacts:
+    paths:
+      - PayCode*
