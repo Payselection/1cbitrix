@@ -49,6 +49,19 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         'vat120' => 1.2,
     ];
 
+    private const VAT_MAP = [
+        'Без НДС' => 'none',
+        'НДС 0%' => 'vat0',
+        'НДС 10%' => 'vat10',
+        'НДС 20%' => 'vat20',
+        'НДС 10/110' => 'vat110',
+        'НДС 20/120' => 'vat120',
+    ];
+    /**
+     * @var array|array[]
+     */
+    private static array $vats;
+
     /**
      * @return array
      */
@@ -230,6 +243,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                     'payment_address' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_ADDRESS'),
                 ],
                 'items' => $this->setFFDParams($payment),
+                'vats' => $this->setVats(),
                 'payments' => array([
                     'type' => 1,
                     'sum' => (float)(PriceMaths::roundPrecision($payment->getSum())),
@@ -287,26 +301,14 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                             $permittedRate = $vatInfo['RATE'];
                             $errorMessage = "VAT type for the delivery with rate $permittedRate does not permitted.";
                             // Получение типа НДС на основе наименования ставки
-                            if ($vatInfo['NAME'] === 'Без НДС') {
-                                $deliveryVatType = 'none';
-                            } elseif ($vatInfo['NAME'] === 'НДС 0%') {
-                                $deliveryVatType = 'vat0';
-                            } elseif ($vatInfo['NAME'] === 'НДС 10%') {
-                                $deliveryVatType = 'vat10';
-                            } elseif ($vatInfo['NAME'] === 'НДС 20%') {
-                                $deliveryVatType = 'vat20';
-                            } elseif ($vatInfo['NAME'] === 'НДС 10/110') {
-                                $deliveryVatType = 'vat110';
-                            } elseif ($vatInfo['NAME'] === 'НДС 20/120') {
-                                $deliveryVatType = 'vat120';
+                            if (isset(self::VAT_MAP[$vatInfo['NAME']])) {
+                                $deliveryVatType = self::VAT_MAP[$vatInfo['NAME']];
                             } else {
                                 PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
                                 ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_GENERAL'));
                                 die();
-
                             }
                         }
-
                     }
                 }
             }
@@ -317,6 +319,55 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         return $deliveryVatType;
     }
 
+    private function getVatSum($BasketItem, $payment)
+    {
+        $vatRate = $BasketItem->getField('VAT_RATE');
+        $sum = $BasketItem->getFinalPrice();
+        $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
+        if ($paySelectionType === null) {
+            if ($vatRate === null) {
+                return null;
+            } else if (floatval($vatRate) == 0) {
+                return 0;
+            }
+        } else {
+            $vatRate = self::VAT_VALUES[$paySelectionType];
+        }
+
+        $vat = $sum - ($sum / (1 + $vatRate));
+        return (float)(PriceMaths::roundPrecision($vat));
+    }
+
+    private function getDeliveryVatSum($BasketItem, $payment, $sumDelivery): float
+    {
+        $basketItemDeliveryId = $BasketItem->getField('DELIVERY_ID');
+        $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
+        $deliveryVatType = 'none';
+        if ($paySelectionType === null) {
+            if (!empty($basketItemDeliveryId)) {
+                $deliveryService = Manager::getObjectById($basketItemDeliveryId);
+                if ($deliveryService) {
+                    $deliveryVatId = $deliveryService->getVatId();
+                    if (!empty($deliveryVatId)) {
+                        $vatInfo = VatTable::getList(array(
+                            'filter' => array('=ID' => $deliveryVatId),
+                            'select' => array('NAME', 'RATE')
+                        ))->fetch();
+                        if ($vatInfo) {
+                            $deliveryVatType = self::VAT_MAP[$vatInfo['NAME']] ?? 'none';
+                        }
+                    }
+                }
+            }
+            $vatRate = self::VAT_VALUES[$deliveryVatType];
+        } else {
+            $vatRate = self::VAT_VALUES[$paySelectionType];
+        }
+
+        $vat = $sumDelivery - ($sumDelivery / (1 + $vatRate));
+        return (float)(PriceMaths::roundPrecision($vat));
+    }
+
     private function setFFDParams(Payment $payment): array
     {
         $paymentCollection = $payment->getCollection();
@@ -325,8 +376,19 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $Basket = $order->getBasket();
         $basketItems = $Basket->getBasketItems();
         $positions = [];
+        $sumDelivery = $order->getField('PRICE_DELIVERY');
 
         foreach ($basketItems as $key => $BasketItem) {
+            $vatType = $this->getVatType($BasketItem, $payment);
+            $vatSum = $this->getVatSum($BasketItem, $payment);
+
+            // Инициализируем сумму НДС для типа, если она еще не установлена
+            if (!isset(self::$vats[$vatType])) {
+                self::$vats[$vatType] = 0;
+            }
+            // Добавляем сумму НДС для текущего типа
+            self::$vats[$vatType] += $vatSum;
+
             $positions[] = array(
                 'name' => str_replace("\n", "", mb_substr($BasketItem->getField('NAME'), 0, 120)),
                 'sum' => $BasketItem->getFinalPrice(),
@@ -335,27 +397,50 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'payment_method' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_METHOD'),
                 'payment_object' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_OBJECT'),
                 'vat' => [
-                    'type' => $this->getVatType($BasketItem, $payment),
-//                    'sum' => $this->getVatSum($BasketItem, $payment)
+                    'type' => $vatType,
+                    'sum' => $vatSum
                 ]
             );
         }
 
         if ($order->getField('PRICE_DELIVERY') > 0) {
+            $vatTypeDelivery = (string)$this->getDeliveryVatType($order, $payment);
+            $vatSumDelivery = $this->getDeliveryVatSum($order, $payment, $sumDelivery);
+
+            // Инициализируем сумму НДС для типа, если она еще не установлена
+            if (!isset(self::$vats[$vatTypeDelivery])) {
+                self::$vats[$vatTypeDelivery] = 0;
+            }
+            // Добавляем сумму НДС для текущего типа
+            self::$vats[$vatTypeDelivery] += $vatSumDelivery;
+
             $positions[] = array(
                 'name' => Loc::getMessage('SALE_PAYSELECTION_FIRLD_DELIVERY'),
-                'sum' => $order->getField('PRICE_DELIVERY'),
+                'sum' => $sumDelivery,
                 'price' => $order->getField('PRICE_DELIVERY'),
                 'quantity' => 1,
                 'payment_method' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_METHOD_DELIVERY'),
                 'payment_object' => (string)$this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_OBJECT_DELIVERY'),
                 'vat' => [
-                    'type' => (string)$this->getDeliveryVatType($order, $payment),
+                    'type' => $vatTypeDelivery,
+                    'sum' => $vatSumDelivery
                 ]
             );
         }
 
         return $positions;
+    }
+
+    private function setVats(): array
+    {
+        $vats = [];
+        foreach (self::$vats as $type => $sum) {
+            $vats[] = [
+                'type' => $type,
+                'sum' => (float)(PriceMaths::roundPrecision($sum))
+            ];
+        }
+        return $vats;
     }
 
 
@@ -628,6 +713,8 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 CHTTP::SetStatus("403 Forbidden");
                 die();
             }
+        } else if ($data['Event'] === '3DS' || $data['Event'] === 'Redirect3DS') {
+            PaySystem\Logger::addDebugInfo(__CLASS__ . ': Event: 3DS or Redirect3DS');
         } else {
             $payment->setField('PS_INVOICE_ID', $data['TransactionId']);
             $payselectionPaymentResult = $this->getPayselectionPayment($payment);

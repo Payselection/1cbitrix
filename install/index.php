@@ -42,7 +42,6 @@ class p10102022_p10102022paycode2022 extends CModule
         $eventManager = \Bitrix\Main\EventManager::getInstance();
         $this->errors = false;
         CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/local/", $_SERVER["DOCUMENT_ROOT"]."/local/",true,true);
-        CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/payselection_create_link/", $_SERVER["DOCUMENT_ROOT"]."/payselection_create_link/",true,true);
         $eventManager->registerEventHandlerCompatible('main', 'OnAdminContextMenuShow', $this->MODULE_ID, "PayselectionButton", 'OrderDetailAdminContextMenuShow_',9999);
         return true;
     }
