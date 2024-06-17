@@ -15,7 +15,7 @@ $language = LANGUAGE_ID; ?>
         };
         $.ajax({
             type: 'GET',
-            url: '/payselection_create_link/payselection_pay_link.php?Order_ID=' + id,
+            url: '/bitrix/php_interface/include/sale_payment/p10102022_p10102022paycode2022/payselection_pay_link.php?Order_ID=' + id,
             success: function (data) {
                 alert(messages['<?php echo $language; ?>'][ "PAYMENT_SUCCESS_MESSAGE"]);
             },
