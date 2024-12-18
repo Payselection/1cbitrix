@@ -21,6 +21,9 @@ $MESS["SALE_PAYSELECTION_FAIL_URL_DESC"] = "Оставьте пустым для
 $MESS["SALE_PAYSELECTION_CANCEL_URL"] = "URL, на который будет перенаправлен клиент в случае отмены операции";
 $MESS["SALE_PAYSELECTION_CANCEL_URL_DESC"] = "Оставьте пустым для автоматического определения адреса, клиент вернется на страницу с которой был выполнен переход на оплату";
 
+$MESS["SALE_PAYSELECTION_PAYMENT_PREVIEW_FORM"] = "Отображение экрана с детализацией заказа";
+$MESS["SALE_PAYSELECTION_PAYMENT_SHORT_DESCRIPTION"] = "Краткое описание платежа";
+
 $MESS["SALE_PAYSELECTION_TYPE_SYSTEM"] = "Схема проведения платежей";
 $MESS["SALE_PAYSELECTION_TYPE_SCHEME_0"] = "Одностадийная оплата";
 $MESS["SALE_PAYSELECTION_TYPE_SCHEME_1"] = "Двухстадийная оплата";
@@ -74,3 +77,7 @@ $MESS["SALE_PAYSELECTION_NDS_vat10"] = "НДС чека по ставке 10%";
 $MESS["SALE_PAYSELECTION_NDS_vat20"] = "НДС чека по ставке 20%";
 $MESS["SALE_PAYSELECTION_NDS_vat110"] = "НДС чека по расчетной ставке 10/110";
 $MESS["SALE_PAYSELECTION_NDS_vat120"]  = "НДС чека по расчетной ставке 20/120";
+$MESS["SALE_PAYSELECTION_NDS_vat5"] = "НДС чека по ставке 5%";
+$MESS["SALE_PAYSELECTION_NDS_vat7"] = "НДС чека по ставке 7%";
+$MESS["SALE_PAYSELECTION_NDS_vat105"] = "НДС чека по расчетной ставке 5/105";
+$MESS["SALE_PAYSELECTION_NDS_vat107"]  = "НДС чека по расчетной ставке 7/107";

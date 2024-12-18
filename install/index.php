@@ -1,6 +1,11 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Mail\Internal\EventTypeTable;
+use Bitrix\Main\Mail\Internal\EventMessageTable;
+use Bitrix\Main\Mail\Internal\EventMessageSiteTable;
+use Bitrix\Main\SiteTable;
 
 Loc::loadMessages(__FILE__);
 IncludeModuleLangFile(__FILE__);
@@ -40,14 +45,24 @@ class p10102022_p10102022paycode2022 extends CModule
         $this->installFiles();
         \Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
         $eventManager = \Bitrix\Main\EventManager::getInstance();
-        $this->errors = false;
-        CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/local/", $_SERVER["DOCUMENT_ROOT"]."/local/",true,true);
-        $eventManager->registerEventHandlerCompatible('main', 'OnAdminContextMenuShow', $this->MODULE_ID, "PayselectionButton", 'OrderDetailAdminContextMenuShow_',9999);
+        // Устанавливаем почтовое событие
+        $this->installMailEvents();
+        $eventManager->registerEventHandlerCompatible(
+            'main',
+            'OnAdminContextMenuShow',
+            $this->MODULE_ID,
+            'CustomOrderHandler',
+            'onAdminContextMenuShowHandler'
+        );
         return true;
     }
 
     public function DoUninstall()
     {
+        // Удаляем почтовые события
+        $this->uninstallMailEvents();
+        // Удаляем обработчики событий
+        $this->UnInstallEvents();
         $this->uninstallFiles();
         \Bitrix\Main\Config\Option::delete($this->MODULE_ID);
         \Bitrix\Main\ModuleManager::unRegisterModule($this->MODULE_ID);
@@ -73,5 +88,117 @@ class p10102022_p10102022paycode2022 extends CModule
     {
         DeleteDirFilesEx("/bitrix/php_interface/include/sale_payment/p10102022_p10102022paycode2022");
         return true;
+    }
+
+    private function installMailEvents()
+    {
+        // Получаем список сайтов
+        $sites = [];
+        $result = SiteTable::getList([
+            'filter' => ['ACTIVE' => 'Y'],
+            'select' => ['LID'],
+        ]);
+
+        while ($site = $result->fetch()) {
+            $sites[] = $site['LID'];
+        }
+
+        if (empty($sites)) {
+            throw new \RuntimeException('Нет активных сайтов для привязки почтового шаблона.');
+        }
+
+        // Добавляем почтовое событие
+        $eventTypeResult = EventTypeTable::add([
+            'LID'         => 'ru',
+            'EVENT_NAME'  => 'PAYSELECTION_ORDER_SEND_LINK',
+            'EVENT_TYPE'  => 'email',
+            'NAME'        => 'Ссылка на оплату заказа',
+            'DESCRIPTION' => "#EMAIL_TO# - Email получателя\n#ORDER_ID# - Номер заказа\n#ORDER_SUM# - Сумма заказа",
+        ]);
+        if (!$eventTypeResult->isSuccess()) {
+            throw new \Bitrix\Main\SystemException("Ошибка создания почтового события");
+        }
+        $eventTypeResult = EventTypeTable::add([
+            'LID'         => 'en',
+            'EVENT_NAME'  => 'PAYSELECTION_ORDER_SEND_LINK',
+            'EVENT_TYPE'  => 'email',
+            'NAME'        => 'Link to order payment',
+            'DESCRIPTION' => "#EMAIL_TO# - Email получателя\n#ORDER_ID# - Номер заказа\n#ORDER_SUM# - Сумма заказа",
+        ]);
+        if (!$eventTypeResult->isSuccess()) {
+            throw new \Bitrix\Main\SystemException("Ошибка создания почтового события");
+        }
+
+        // Добавляем почтовый шаблон для всех сайтов
+        $message = file_get_contents($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $this->MODULE_ID . "/templates/order_send_link.html");
+        foreach ($sites as $siteId) {
+            $eventMessageResult = EventMessageTable::add([
+                'ACTIVE' => 'Y',
+                'EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK',
+                'LID' => $siteId,
+                'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+                'EMAIL_TO' => '#EMAIL_TO#',
+                'SUBJECT' => 'Ссылка на оплату заказа №#ORDER_ID#',
+                'MESSAGE' => $message,
+                'BODY_TYPE' => 'html',
+            ]);
+            if (!$eventMessageResult->isSuccess()) {
+                throw new \Bitrix\Main\SystemException("Ошибка создания шаблона письма");
+            }
+            $eventMessageId = $eventMessageResult->getId();
+            $siteBindingResult = EventMessageSiteTable::add([
+                'EVENT_MESSAGE_ID' => $eventMessageId,
+                'SITE_ID' => $siteId,
+            ]);
+
+            if (!$siteBindingResult->isSuccess()) {
+                throw new \RuntimeException('Ошибка при привязке шаблона к сайту ' . $siteId . ': ' . implode(', ', $siteBindingResult->getErrorMessages()));
+            }
+        }
+    }
+
+    public function UnInstallEvents()
+    {
+        \Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler(
+            'main',
+            'OnAdminContextMenuShow',
+            $this->MODULE_ID,
+            '\CustomOrderHandler',
+            'onAdminContextMenuShowHandler'
+        );
+
+        return true;
+    }
+
+    private function uninstallMailEvents()
+    {
+        // Удаляем почтовое событие
+        $eventTypes = EventTypeTable::getList([
+            'filter' => ['EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK'],
+        ]);
+
+        while ($eventType = $eventTypes->fetch()) {
+            EventTypeTable::delete($eventType['ID']);
+        }
+
+        // Удаляем почтовый шаблон
+        $eventMessages = EventMessageTable::getList([
+            'filter' => ['EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK'],
+        ]);
+        while ($eventMessage = $eventMessages->fetch()) {
+            $eventMessageId = $eventMessage['ID'];
+            $eventMessageSites = EventMessageSiteTable::getList([
+                'filter' => ['EVENT_MESSAGE_ID' => $eventMessageId],
+            ]);
+
+            while ($eventMessageSite = $eventMessageSites->fetch()) {
+                EventMessageSiteTable::delete([
+                    'EVENT_MESSAGE_ID' => $eventMessageSite['EVENT_MESSAGE_ID'],
+                    'SITE_ID' => $eventMessageSite['SITE_ID'],
+                ]);
+            }
+
+            EventMessageTable::delete($eventMessageId);
+        }
     }
 }

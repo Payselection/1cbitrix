@@ -1,5 +1,0 @@
-<?
-$MESS["PAYSELECTION_SEND_LINK"] = "Send Link";
-$MESS["PAYSELECTION_SEND_LINK_TITLE"] = "Send Link";
-$MESS["PAYMENT_LINK_SUBJECT"] = "Payment Link";
-
