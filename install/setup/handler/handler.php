@@ -198,10 +198,12 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $result = new ServiceResult();
         $url = $this->getUrl($payment, 'getPaymentCreate');
         $orderId = $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID');
+        $shortDescription = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_SHORT_DESCRIPTION');
         $params = [
             'MetaData' => [
                 'PaymentType' => ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'Block' : 'Pay'),
                 'PreviewForm' => $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_PREVIEW_FORM') === 'Y',
+                'Initiator' => 'WidgetRedirect',
             ],
             'PaymentRequest' => [
                 'Amount' => (string)($this->roundNumber($payment->getSum())),
@@ -210,11 +212,11 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'PaymentMethod' => 'Card',
                 'RebillFlag' => false,
                 'OrderId' => $orderId,
-                'ExtraData' => [
+                'ExtraData' => $shortDescription ? [
                     'WebhookUrl' => $this->getNotificationUrl($payment),
-                    'ShortDescription' => [
-                        LANGUAGE_ID => $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_SHORT_DESCRIPTION'),
-                    ],
+                    'ShortDescription' => [LANGUAGE_ID => $shortDescription]
+                ] : [
+                    'WebhookUrl' => $this->getNotificationUrl($payment),
                 ],
             ],
             'CustomerInfo' => [
@@ -979,13 +981,28 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $path = parse_url($url, PHP_URL_PATH);
         if ($path === '/webpayments/paylink_create') {
             $secretKey = $this->getBusinessValue($payment, 'PAYSELECTION_KEY');
-            $path = Context::getCurrent()->getServer()->getHttpHost();
+            $host = Context::getCurrent()->getServer()->getHttpHost();
+
+            if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+                $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'];
+            } elseif (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+                $protocol = 'https';
+            } elseif ($_SERVER['SERVER_PORT'] == 443) {
+                $protocol = 'https';
+            } else {
+                $protocol = 'http';
+            }
+
+            $path = "{$protocol}://{$host}";
         }
-        $msg = $method . PHP_EOL .
-            $path . PHP_EOL .
-            $site_id . PHP_EOL .
-            $uid . PHP_EOL .
-            $body;
+
+        $msg = implode("\n", [
+            $method,
+            $path,
+            $site_id,
+            $uid,
+            $body
+        ]);
         return [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',

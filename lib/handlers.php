@@ -31,11 +31,11 @@ class CustomOrderHandler
                         $payment = $paymentCollection[0];
                         $service = \Bitrix\Sale\PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
                         $context = \Bitrix\Main\Application::getInstance()->getContext();
-                        $request = $service->initiatePay($payment, $context->getRequest());
-                        $paymentURL = $request->getPaymentUrl();
+                        $req = $service->initiatePay($payment, $context->getRequest());
+                        $paymentURL = $req->getPaymentUrl();
 
                         if (empty($paymentURL)) {
-                            throw new SystemException("Ошибка: Не удалось получить URL для оплаты.");
+                            throw new \Exception("Ошибка платежной системы");
                         }
 
                         $result = Event::sendImmediate([
@@ -54,10 +54,15 @@ class CustomOrderHandler
                         } else {
                             LocalRedirect($APPLICATION->GetCurPageParam("link_sent=N", ["send_payment_link"]));
                         }
+                    } catch (\TypeError $e) {
+                        \CAdminMessage::ShowMessage([
+                            "MESSAGE" => "Ошибка при получении URL оплаты: {$e->getMessage()}",
+                            "TYPE" => "ERROR",
+                        ]);
                     } catch (\Exception $e) {
                         \CAdminMessage::ShowMessage([
                             "MESSAGE" => $e->getMessage(),
-                            "TYPE"    => "ERROR",
+                            "TYPE" => "ERROR",
                         ]);
                     }
                 }
