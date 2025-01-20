@@ -32,16 +32,16 @@ if (isset($_GET['Order_ID'])) {
 //        "EVENT_NAME" => $eventName,
 //        "LID" => "s1",
 //        "EMAIL_TO" => $email,
-//        "SUBJECT" => "РЎСЃС‹Р»РєР° РЅР° РѕРїР»Р°С‚Сѓ",
+//        "SUBJECT" => "Ссылка на оплату",
 //        "MESSAGE" => '
 //            <div class="mb-4">
-//                <p>РЈСЃР»СѓРіСѓ РїСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ СЃРµСЂРІРёСЃ <b>&laquo;Payselection&raquo;</b>.</p>
-//                <p>РЎСѓРјРјР° Рє РѕРїР»Р°С‚Рµ: </p>
+//                <p>Услугу предоставляет сервис <b>&laquo;Payselection&raquo;</b>.</p>
+//                <p>Сумма к оплате: </p>
 //                <div class="d-flex align-items-center mb-3">
 //                    <div class="col-auto pl-0">
-//                        <a class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;" href="' . $paymentURL . '">РћРїР»Р°С‚РёС‚СЊ</a>
+//                        <a class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;" href="' . $paymentURL . '">Оплатить</a>
 //                    </div>
-//                    <div class="col pr-0">&nbsp;&nbsp;Р’С‹ Р±СѓРґРµС‚Рµ РїРµСЂРµРЅР°РїСЂР°РІР»РµРЅС‹ РЅР° СЃС‚СЂР°РЅРёС†Сѓ РѕРїР»Р°С‚С‹</div>
+//                    <div class="col pr-0">&nbsp;&nbsp;Вы будете перенаправлены на страницу оплаты</div>
 //                </div>
 //            </div>
 //        ',
@@ -57,34 +57,34 @@ if (isset($_GET['Order_ID'])) {
 //
 //    ));
 //    if ($result->isSuccess()) {
-//        echo "РЎСЃС‹Р»РєР° РЅР° РѕРїР»Р°С‚Сѓ РѕС‚РїСЂР°РІР»РµРЅР° РЅР° Р°РґСЂРµСЃ $email.";
+//        echo "Ссылка на оплату отправлена на адрес $email.";
 //    } else {
 //        $errors = $result->getErrorMessages();
-//        echo "РћС€РёР±РєР° РїСЂРё РѕС‚РїСЂР°РІРєРµ РїРёСЃСЊРјР°: " . implode(", ", $errors);
+//        echo "Ошибка при отправке письма: " . implode(", ", $errors);
 //    }
 
     $to = $email;
-    $subject = "РЎСЃС‹Р»РєР° РЅР° РѕРїР»Р°С‚Сѓ";
+    $subject = "Ссылка на оплату";
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
     $message = '<html><body>';
     $message = '
             <div class="mb-4">
-                <p>РЈСЃР»СѓРіСѓ РїСЂРµРґРѕСЃС‚Р°РІР»СЏРµС‚ СЃРµСЂРІРёСЃ <b>&laquo;Payselection&raquo;</b>.</p>
-                <p>РЎСѓРјРјР° Рє РѕРїР»Р°С‚Рµ: </p>
+                <p>Услугу предоставляет сервис <b>&laquo;Payselection&raquo;</b>.</p>
+                <p>Сумма к оплате: </p>
                 <div class="d-flex align-items-center mb-3">
                     <div class="col-auto pl-0">
-                        <a class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;" href="' . $paymentURL . '">РћРїР»Р°С‚РёС‚СЊ</a>
+                        <a class="btn btn-lg btn-success pl-4 pr-4" style="border-radius: 32px;" href="' . $paymentURL . '">Оплатить</a>
                     </div>
-                    <div class="col pr-0">&nbsp;&nbsp;Р’С‹ Р±СѓРґРµС‚Рµ РїРµСЂРµРЅР°РїСЂР°РІР»РµРЅС‹ РЅР° СЃС‚СЂР°РЅРёС†Сѓ РѕРїР»Р°С‚С‹</div>
+                    <div class="col pr-0">&nbsp;&nbsp;Вы будете перенаправлены на страницу оплаты</div>
                 </div>
             </div>
         ';
     $message .= '</body></html>';
     if (bxmail($to, $subject, $message, $headers)) {
-        echo "РЎСЃС‹Р»РєР° РЅР° РѕРїР»Р°С‚Сѓ РѕС‚РїСЂР°РІР»РµРЅР° РЅР° Р°РґСЂРµСЃ $email.";
+        echo "Ссылка на оплату отправлена на адрес $email.";
     } else {
-        echo "РћС€РёР±РєР° РїСЂРё РѕС‚РїСЂР°РІРєРµ РїРёСЃСЊРјР°";
+        echo "Ошибка при отправке письма";
     }
 }
 

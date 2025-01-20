@@ -45,7 +45,7 @@ class p10102022_p10102022paycode2022 extends CModule
         $this->installFiles();
         \Bitrix\Main\ModuleManager::registerModule($this->MODULE_ID);
         $eventManager = \Bitrix\Main\EventManager::getInstance();
-        // Ð£ÑÑ‚Ð°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°ÐµÐ¼ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ð¾Ðµ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ðµ
+        // Óñòàíàâëèâàåì ïî÷òîâîå ñîáûòèå
         $this->installMailEvents();
         $eventManager->registerEventHandlerCompatible(
             'main',
@@ -59,9 +59,9 @@ class p10102022_p10102022paycode2022 extends CModule
 
     public function DoUninstall()
     {
-        // Ð£Ð´Ð°Ð»ÑÐµÐ¼ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ñ‹Ðµ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ñ
+        // Óäàëÿåì ïî÷òîâûå ñîáûòèÿ
         $this->uninstallMailEvents();
-        // Ð£Ð´Ð°Ð»ÑÐµÐ¼ Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚Ñ‡Ð¸ÐºÐ¸ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ð¹
+        // Óäàëÿåì îáðàáîò÷èêè ñîáûòèé
         $this->UnInstallEvents();
         $this->uninstallFiles();
         \Bitrix\Main\Config\Option::delete($this->MODULE_ID);
@@ -92,7 +92,7 @@ class p10102022_p10102022paycode2022 extends CModule
 
     private function installMailEvents()
     {
-        // ÐŸÐ¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ ÑÐ¿Ð¸ÑÐ¾Ðº ÑÐ°Ð¹Ñ‚Ð¾Ð²
+        // Ïîëó÷àåì ñïèñîê ñàéòîâ
         $sites = [];
         $result = SiteTable::getList([
             'filter' => ['ACTIVE' => 'Y'],
@@ -104,32 +104,32 @@ class p10102022_p10102022paycode2022 extends CModule
         }
 
         if (empty($sites)) {
-            throw new \RuntimeException('ÐÐµÑ‚ Ð°ÐºÑ‚Ð¸Ð²Ð½Ñ‹Ñ… ÑÐ°Ð¹Ñ‚Ð¾Ð² Ð´Ð»Ñ Ð¿Ñ€Ð¸Ð²ÑÐ·ÐºÐ¸ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ð¾Ð³Ð¾ ÑˆÐ°Ð±Ð»Ð¾Ð½Ð°.');
+            throw new \RuntimeException('Íåò àêòèâíûõ ñàéòîâ äëÿ ïðèâÿçêè ïî÷òîâîãî øàáëîíà.');
         }
 
-        // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ð¾Ðµ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ðµ
+        // Äîáàâëÿåì ïî÷òîâîå ñîáûòèå
         $eventTypeResult = EventTypeTable::add([
             'LID'         => 'ru',
             'EVENT_NAME'  => 'PAYSELECTION_ORDER_SEND_LINK',
             'EVENT_TYPE'  => 'email',
-            'NAME'        => 'Ð¡ÑÑ‹Ð»ÐºÐ° Ð½Ð° Ð¾Ð¿Ð»Ð°Ñ‚Ñƒ Ð·Ð°ÐºÐ°Ð·Ð°',
-            'DESCRIPTION' => "#EMAIL_TO# - Email Ð¿Ð¾Ð»ÑƒÑ‡Ð°Ñ‚ÐµÐ»Ñ\n#ORDER_ID# - ÐÐ¾Ð¼ÐµÑ€ Ð·Ð°ÐºÐ°Ð·Ð°\n#ORDER_SUM# - Ð¡ÑƒÐ¼Ð¼Ð° Ð·Ð°ÐºÐ°Ð·Ð°",
+            'NAME'        => 'Ññûëêà íà îïëàòó çàêàçà',
+            'DESCRIPTION' => "#EMAIL_TO# - Email ïîëó÷àòåëÿ\n#ORDER_ID# - Íîìåð çàêàçà\n#ORDER_SUM# - Ñóììà çàêàçà",
         ]);
         if (!$eventTypeResult->isSuccess()) {
-            throw new \Bitrix\Main\SystemException("ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ð¾Ð³Ð¾ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ñ");
+            throw new \Bitrix\Main\SystemException("Îøèáêà ñîçäàíèÿ ïî÷òîâîãî ñîáûòèÿ");
         }
         $eventTypeResult = EventTypeTable::add([
             'LID'         => 'en',
             'EVENT_NAME'  => 'PAYSELECTION_ORDER_SEND_LINK',
             'EVENT_TYPE'  => 'email',
             'NAME'        => 'Link to order payment',
-            'DESCRIPTION' => "#EMAIL_TO# - Email Ð¿Ð¾Ð»ÑƒÑ‡Ð°Ñ‚ÐµÐ»Ñ\n#ORDER_ID# - ÐÐ¾Ð¼ÐµÑ€ Ð·Ð°ÐºÐ°Ð·Ð°\n#ORDER_SUM# - Ð¡ÑƒÐ¼Ð¼Ð° Ð·Ð°ÐºÐ°Ð·Ð°",
+            'DESCRIPTION' => "#EMAIL_TO# - Email ïîëó÷àòåëÿ\n#ORDER_ID# - Íîìåð çàêàçà\n#ORDER_SUM# - Ñóììà çàêàçà",
         ]);
         if (!$eventTypeResult->isSuccess()) {
-            throw new \Bitrix\Main\SystemException("ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ð¾Ð³Ð¾ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ñ");
+            throw new \Bitrix\Main\SystemException("Îøèáêà ñîçäàíèÿ ïî÷òîâîãî ñîáûòèÿ");
         }
 
-        // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ñ‹Ð¹ ÑˆÐ°Ð±Ð»Ð¾Ð½ Ð´Ð»Ñ Ð²ÑÐµÑ… ÑÐ°Ð¹Ñ‚Ð¾Ð²
+        // Äîáàâëÿåì ïî÷òîâûé øàáëîí äëÿ âñåõ ñàéòîâ
         $message = file_get_contents($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $this->MODULE_ID . "/templates/order_send_link.html");
         foreach ($sites as $siteId) {
             $eventMessageResult = EventMessageTable::add([
@@ -138,12 +138,12 @@ class p10102022_p10102022paycode2022 extends CModule
                 'LID' => $siteId,
                 'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
                 'EMAIL_TO' => '#EMAIL_TO#',
-                'SUBJECT' => 'Ð¡ÑÑ‹Ð»ÐºÐ° Ð½Ð° Ð¾Ð¿Ð»Ð°Ñ‚Ñƒ Ð·Ð°ÐºÐ°Ð·Ð° â„–#ORDER_ID#',
+                'SUBJECT' => 'Ññûëêà íà îïëàòó çàêàçà ¹#ORDER_ID#',
                 'MESSAGE' => $message,
                 'BODY_TYPE' => 'html',
             ]);
             if (!$eventMessageResult->isSuccess()) {
-                throw new \Bitrix\Main\SystemException("ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ ÑˆÐ°Ð±Ð»Ð¾Ð½Ð° Ð¿Ð¸ÑÑŒÐ¼Ð°");
+                throw new \Bitrix\Main\SystemException("Îøèáêà ñîçäàíèÿ øàáëîíà ïèñüìà");
             }
             $eventMessageId = $eventMessageResult->getId();
             $siteBindingResult = EventMessageSiteTable::add([
@@ -152,7 +152,7 @@ class p10102022_p10102022paycode2022 extends CModule
             ]);
 
             if (!$siteBindingResult->isSuccess()) {
-                throw new \RuntimeException('ÐžÑˆÐ¸Ð±ÐºÐ° Ð¿Ñ€Ð¸ Ð¿Ñ€Ð¸Ð²ÑÐ·ÐºÐµ ÑˆÐ°Ð±Ð»Ð¾Ð½Ð° Ðº ÑÐ°Ð¹Ñ‚Ñƒ ' . $siteId . ': ' . implode(', ', $siteBindingResult->getErrorMessages()));
+                throw new \RuntimeException('Îøèáêà ïðè ïðèâÿçêå øàáëîíà ê ñàéòó ' . $siteId . ': ' . implode(', ', $siteBindingResult->getErrorMessages()));
             }
         }
     }
@@ -172,7 +172,7 @@ class p10102022_p10102022paycode2022 extends CModule
 
     private function uninstallMailEvents()
     {
-        // Ð£Ð´Ð°Ð»ÑÐµÐ¼ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ð¾Ðµ ÑÐ¾Ð±Ñ‹Ñ‚Ð¸Ðµ
+        // Óäàëÿåì ïî÷òîâîå ñîáûòèå
         $eventTypes = EventTypeTable::getList([
             'filter' => ['EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK'],
         ]);
@@ -181,7 +181,7 @@ class p10102022_p10102022paycode2022 extends CModule
             EventTypeTable::delete($eventType['ID']);
         }
 
-        // Ð£Ð´Ð°Ð»ÑÐµÐ¼ Ð¿Ð¾Ñ‡Ñ‚Ð¾Ð²Ñ‹Ð¹ ÑˆÐ°Ð±Ð»Ð¾Ð½
+        // Óäàëÿåì ïî÷òîâûé øàáëîí
         $eventMessages = EventMessageTable::getList([
             'filter' => ['EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK'],
         ]);

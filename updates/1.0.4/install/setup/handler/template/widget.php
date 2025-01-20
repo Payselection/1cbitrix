@@ -30,7 +30,6 @@ $sum = round($params['sum'], 2);
             {
                 MetaData: {
                     PaymentType: "<?= CUtil::JSEscape($params['payment_type']) ?>",
-                    PreviewForm: <?= CUtil::JSEscape($params['preview_form']) ?>,
                 },
                 PaymentRequest: {
                     OrderId: "<?= CUtil::JSEscape($params['PaymentRequest']['OrderId']) ?>",

@@ -65,27 +65,6 @@ $data = [
 				'PROVIDER_VALUE' => Loc::getMessage('SALE_PAYSELECTION_PAYMENT_DESCRIPTION_TEMPLATE'),
 			],
 		],
-        'PAYSELECTION_PAYMENT_SHORT_DESCRIPTION' => [
-            'NAME' => Loc::getMessage('SALE_PAYSELECTION_PAYMENT_SHORT_DESCRIPTION'),
-            'SORT' => 301,
-            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_CONNECT_SETTINGS'),
-            'DEFAULT' => [
-                'PROVIDER_KEY' => 'VALUE',
-                'PROVIDER_VALUE' => '',
-            ],
-        ],
-        'PAYSELECTION_PAYMENT_PREVIEW_FORM' => array(
-            'NAME' => Loc::getMessage('SALE_PAYSELECTION_PAYMENT_PREVIEW_FORM'),
-            'SORT' => 305,
-            'GROUP' => Loc::getMessage('SALE_PAYSELECTION_CONNECT_SETTINGS'),
-            'INPUT' => [
-                'TYPE' => 'Y/N',
-            ],
-            'DEFAULT' => [
-                'PROVIDER_KEY' => 'INPUT',
-                'PROVIDER_VALUE' => 'N',
-            ],
-        ),
         'PAYSELECTION_PAYMENT_TYPE_SYSTEM' => array(
             'NAME' => Loc::getMessage('SALE_PAYSELECTION_TYPE_SYSTEM'),
             'INPUT' => array(
@@ -277,11 +256,7 @@ $data = [
                     'vat10' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat10'),
                     'vat20' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat20'),
                     'vat110'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat110'),
-                    'vat120'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat120'),
-                    'vat5' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat5'),
-                    'vat7' => Loc::getMessage('SALE_PAYSELECTION_NDS_vat7'),
-                    'vat105'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat105'),
-                    'vat107'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat107'),
+                    'vat120'=> Loc::getMessage('SALE_PAYSELECTION_NDS_vat120')
                 )
             ),
             'DEFAULT' => array(

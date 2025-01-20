@@ -18,7 +18,6 @@ use Bitrix\Main,
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Catalog\VatTable;
-use Bitrix\Main\Context;
 
 Loc::loadMessages(__FILE__);
 
@@ -42,29 +41,21 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     private const SEND_METHOD_HTTP_GET = "GET";
 
     private const VAT_VALUES = [
-        'none' => 0,        // Ð‘ÐµÐ· ÐÐ”Ð¡
-        'vat0' => 0,        // ÐÐ”Ð¡ 0%
-        'vat10' => 0.1,     // ÐÐ”Ð¡ 10%
-        'vat20' => 0.2,     // ÐÐ”Ð¡ 20%
-        'vat110' => 1.1,    // ÐÐ”Ð¡ 10/110
-        'vat120' => 1.2,    // ÐÐ”Ð¡ 20/120
-        'vat5' => 0.05,     // ÐÐ”Ð¡ 5%
-        'vat7' => 0.07,     // ÐÐ”Ð¡ 7%
-        'vat105' => 1.05,   // ÐÐ”Ð¡ 5/105
-        'vat107' => 1.07,   // ÐÐ”Ð¡ 7/107
+        'none' => 0,
+        'vat0' => 0,
+        'vat10' => 0.1,
+        'vat20' => 0.2,
+        'vat110' => 1.1,
+        'vat120' => 1.2,
     ];
 
     private const VAT_MAP = [
-        'Ð‘ÐµÐ· ÐÐ”Ð¡' => 'none',
-        'ÐÐ”Ð¡ 0%' => 'vat0',
-        'ÐÐ”Ð¡ 10%' => 'vat10',
-        'ÐÐ”Ð¡ 20%' => 'vat20',
-        'ÐÐ”Ð¡ 10/110' => 'vat110',
-        'ÐÐ”Ð¡ 20/120' => 'vat120',
-        'ÐÐ”Ð¡ 5%' => 'vat5',
-        'ÐÐ”Ð¡ 7%' => 'vat7',
-        'ÐÐ”Ð¡ 5/105' => 'vat105',
-        'ÐÐ”Ð¡ 7/107' => 'vat107',
+        'Áåç ÍÄÑ' => 'none',
+        'ÍÄÑ 0%' => 'vat0',
+        'ÍÄÑ 10%' => 'vat10',
+        'ÍÄÑ 20%' => 'vat20',
+        'ÍÄÑ 10/110' => 'vat110',
+        'ÍÄÑ 20/120' => 'vat120',
     ];
     /**
      * @var array|array[]
@@ -77,6 +68,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     public static function getHandlerModeList(): array
     {
         return array(
+            static::MODE_CHECKOUT => Loc::getMessage('SALE_PAYSELECTION_CHECKOUT_MODE'),
             static::MODE_WIDGET => Loc::getMessage('SALE_PAYSELECTION_WIDGET_MODE'),
         );
     }
@@ -96,12 +88,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     {
         $result = new ServiceResult();
 
-        $context = \Bitrix\Main\Application::getInstance()->getContext();
-        $httpRequest = $context->getRequest();
-        PaySystem\Logger::addDebugInfo(__CLASS__ . ':$httpRequest: ' . $httpRequest->getQuery("send_payment_link"));
-
-        if ($httpRequest->getQuery("send_payment_link") === "Y") {
-            // Ð’Ñ‹Ð·Ð¾Ð² Ð¸Ð· ÐºÐ½Ð¾Ð¿ÐºÐ¸ "ÐžÑ‚Ð¿Ñ€Ð°Ð²Ð¸Ñ‚ÑŒ ÑÑÑ‹Ð»ÐºÑƒ"
+        if ($this->isCheckoutMode()) {
             $createPaymentTokenResult = $this->createPaymentToken($payment);
             if (!$createPaymentTokenResult->isSuccess()) {
                 $result->addErrors($createPaymentTokenResult->getErrors());
@@ -111,11 +98,12 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             $createPaymentTokenData = $createPaymentTokenResult->getData();
             $result->setPaymentUrl($createPaymentTokenData['url']);
             $this->setExtraParams($createPaymentTokenData);
-        } else {
-            // Ð’Ñ‹Ð·Ð¾Ð² Ð¸Ð· Ñ„Ð¾Ñ€Ð¼Ñ‹ Ð·Ð°ÐºÐ°Ð·Ð° ÐºÐ»Ð¸ÐµÐ½Ñ‚Ð°
+        } else if ($this->isWidgetMode()) {
             $t = $this->getTemplateParams($payment);
             PaySystem\Logger::addDebugInfo(__CLASS__ . ':getTemplateParams: ' . static::encode($t));
             $this->setExtraParams($t);
+        } else {
+            return $result;
         }
 
         $showTemplateResult = $this->showTemplate($payment, $this->getTemplateName());
@@ -164,9 +152,6 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                     'DeclineUrl' => $this->getDeclineUrl($payment),
                     'FailUrl' => $this->getFailUrl($payment),
                     'CancelUrl' => $this->getCancelUrl($payment),
-                    'ShortDescription' => [
-                        LANGUAGE_ID => $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_SHORT_DESCRIPTION'),
-                    ],
                 ],
             ],
             'CustomerInfo' => [
@@ -179,7 +164,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $params['sum'] = (string)($this->roundNumber($payment->getSum()));
         $params['currency'] = $payment->getField('CURRENCY');
         $params['payment_type'] = ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'Block' : 'Pay');
-        $params['preview_form'] = ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_PREVIEW_FORM') === 'Y' ? 'true' : 'false');
+
 
         return $params;
     }
@@ -198,12 +183,9 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $result = new ServiceResult();
         $url = $this->getUrl($payment, 'getPaymentCreate');
         $orderId = $payment->getId() . self::TRACKING_ID_DELIMITER . $this->service->getField('ID');
-        $shortDescription = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_SHORT_DESCRIPTION');
         $params = [
             'MetaData' => [
                 'PaymentType' => ($this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_TYPE_SYSTEM') === '1' ? 'Block' : 'Pay'),
-                'PreviewForm' => $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_PREVIEW_FORM') === 'Y',
-                'Initiator' => 'WidgetRedirect',
             ],
             'PaymentRequest' => [
                 'Amount' => (string)($this->roundNumber($payment->getSum())),
@@ -212,11 +194,12 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 'PaymentMethod' => 'Card',
                 'RebillFlag' => false,
                 'OrderId' => $orderId,
-                'ExtraData' => $shortDescription ? [
+                'ExtraData' => [
                     'WebhookUrl' => $this->getNotificationUrl($payment),
-                    'ShortDescription' => [LANGUAGE_ID => $shortDescription]
-                ] : [
-                    'WebhookUrl' => $this->getNotificationUrl($payment),
+                    'SuccessUrl' => $this->getSuccessUrl($payment),
+                    'DeclineUrl' => $this->getDeclineUrl($payment),
+                    'FailUrl' => $this->getFailUrl($payment),
+                    'CancelUrl' => $this->getCancelUrl($payment),
                 ],
             ],
             'CustomerInfo' => [
@@ -301,7 +284,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     {
         $basketItemDeliveryId = $BasketItem->getField('DELIVERY_ID');
         $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
-        // ÐŸÐ¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ðµ Ñ‚Ð¸Ð¿Ð° ÐÐ”Ð¡ Ð´Ð¾ÑÑ‚Ð°Ð²ÐºÐ¸
+        // Ïîëó÷åíèå òèïà ÍÄÑ äîñòàâêè
         $deliveryVatType = 'none';
         if ($paySelectionType === null) {
             if (!empty($basketItemDeliveryId)) {
@@ -317,7 +300,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                         if ($vatInfo) {
                             $permittedRate = $vatInfo['RATE'];
                             $errorMessage = "VAT type for the delivery with rate $permittedRate does not permitted.";
-                            // ÐŸÐ¾Ð»ÑƒÑ‡ÐµÐ½Ð¸Ðµ Ñ‚Ð¸Ð¿Ð° ÐÐ”Ð¡ Ð½Ð° Ð¾ÑÐ½Ð¾Ð²Ðµ Ð½Ð°Ð¸Ð¼ÐµÐ½Ð¾Ð²Ð°Ð½Ð¸Ñ ÑÑ‚Ð°Ð²ÐºÐ¸
+                            // Ïîëó÷åíèå òèïà ÍÄÑ íà îñíîâå íàèìåíîâàíèÿ ñòàâêè
                             if (isset(self::VAT_MAP[$vatInfo['NAME']])) {
                                 $deliveryVatType = self::VAT_MAP[$vatInfo['NAME']];
                             } else {
@@ -348,14 +331,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                 return 0;
             }
         } else {
-            if (isset(self::VAT_VALUES[$paySelectionType])) {
-                $vatRate = self::VAT_VALUES[$paySelectionType];
-            } else {
-                $errorMessage = "Unknown VAT type $paySelectionType";
-                PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
-                ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_GENERAL'));
-                die();
-            }
+            $vatRate = self::VAT_VALUES[$paySelectionType];
         }
 
         $vat = $sum - ($sum / (1 + $vatRate));
@@ -383,23 +359,9 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                     }
                 }
             }
-            if (isset(self::VAT_VALUES[$deliveryVatType])) {
-                $vatRate = self::VAT_VALUES[$deliveryVatType];
-            } else {
-                $errorMessage = "Unknown VAT type $deliveryVatType";
-                PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
-                ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_GENERAL'));
-                die();
-            }
+            $vatRate = self::VAT_VALUES[$deliveryVatType];
         } else {
-            if (isset(self::VAT_VALUES[$paySelectionType])) {
-                $vatRate = self::VAT_VALUES[$paySelectionType];
-            } else {
-                $errorMessage = "Unknown VAT type $paySelectionType";
-                PaySystem\Logger::addDebugInfo(__CLASS__ . $errorMessage);
-                ShowError(Loc::getMessage('SALE_PAYSELECTION_ERROR_GENERAL'));
-                die();
-            }
+            $vatRate = self::VAT_VALUES[$paySelectionType];
         }
 
         $vat = $sumDelivery - ($sumDelivery / (1 + $vatRate));
@@ -420,11 +382,11 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             $vatType = $this->getVatType($BasketItem, $payment);
             $vatSum = $this->getVatSum($BasketItem, $payment);
 
-            // Ð˜Ð½Ð¸Ñ†Ð¸Ð°Ð»Ð¸Ð·Ð¸Ñ€ÑƒÐµÐ¼ ÑÑƒÐ¼Ð¼Ñƒ ÐÐ”Ð¡ Ð´Ð»Ñ Ñ‚Ð¸Ð¿Ð°, ÐµÑÐ»Ð¸ Ð¾Ð½Ð° ÐµÑ‰Ðµ Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð°
+            // Èíèöèàëèçèðóåì ñóììó ÍÄÑ äëÿ òèïà, åñëè îíà åùå íå óñòàíîâëåíà
             if (!isset(self::$vats[$vatType])) {
                 self::$vats[$vatType] = 0;
             }
-            // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑƒÐ¼Ð¼Ñƒ ÐÐ”Ð¡ Ð´Ð»Ñ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ³Ð¾ Ñ‚Ð¸Ð¿Ð°
+            // Äîáàâëÿåì ñóììó ÍÄÑ äëÿ òåêóùåãî òèïà
             self::$vats[$vatType] += $vatSum;
 
             $positions[] = array(
@@ -445,11 +407,11 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             $vatTypeDelivery = (string)$this->getDeliveryVatType($order, $payment);
             $vatSumDelivery = $this->getDeliveryVatSum($order, $payment, $sumDelivery);
 
-            // Ð˜Ð½Ð¸Ñ†Ð¸Ð°Ð»Ð¸Ð·Ð¸Ñ€ÑƒÐµÐ¼ ÑÑƒÐ¼Ð¼Ñƒ ÐÐ”Ð¡ Ð´Ð»Ñ Ñ‚Ð¸Ð¿Ð°, ÐµÑÐ»Ð¸ Ð¾Ð½Ð° ÐµÑ‰Ðµ Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð°
+            // Èíèöèàëèçèðóåì ñóììó ÍÄÑ äëÿ òèïà, åñëè îíà åùå íå óñòàíîâëåíà
             if (!isset(self::$vats[$vatTypeDelivery])) {
                 self::$vats[$vatTypeDelivery] = 0;
             }
-            // Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ ÑÑƒÐ¼Ð¼Ñƒ ÐÐ”Ð¡ Ð´Ð»Ñ Ñ‚ÐµÐºÑƒÑ‰ÐµÐ³Ð¾ Ñ‚Ð¸Ð¿Ð°
+            // Äîáàâëÿåì ñóììó ÍÄÑ äëÿ òåêóùåãî òèïà
             self::$vats[$vatTypeDelivery] += $vatSumDelivery;
 
             $positions[] = array(
@@ -687,9 +649,8 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
 
         PaySystem\Logger::addDebugInfo(__CLASS__ . ': response data: ' . $response);
         if ($response) {
-            $data = static::decode($response);
             $result->setData([
-                'url' => $data['Url'],
+                'url' => trim($response, '"'),
             ]);
         } else {
             $result->addError(PaySystem\Error::create(Loc::getMessage('SALE_PAYSELECTION_RESPONSE_DECODE_ERROR')));
@@ -979,30 +940,11 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $uid = $this->getIdempotenceKey();
         $site_id = $this->getBusinessValue($payment, 'PAYSELECTION_SITE_ID');
         $path = parse_url($url, PHP_URL_PATH);
-        if ($path === '/webpayments/paylink_create') {
-            $secretKey = $this->getBusinessValue($payment, 'PAYSELECTION_KEY');
-            $host = Context::getCurrent()->getServer()->getHttpHost();
-
-            if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
-                $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'];
-            } elseif (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-                $protocol = 'https';
-            } elseif ($_SERVER['SERVER_PORT'] == 443) {
-                $protocol = 'https';
-            } else {
-                $protocol = 'http';
-            }
-
-            $path = "{$protocol}://{$host}";
-        }
-
-        $msg = implode("\n", [
-            $method,
-            $path,
-            $site_id,
-            $uid,
-            $body
-        ]);
+        $msg = $method . PHP_EOL .
+            $path . PHP_EOL .
+            $site_id . PHP_EOL .
+            $uid . PHP_EOL .
+            $body;
         return [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
@@ -1060,7 +1002,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         $url = '';
         if ($payment !== null && $action === 'getPaymentCreate') {
             $host = $this->getBusinessValue($payment, 'PAYSELECTION_CHECKOUT_API_URL');
-            $url = $host . '/webpayments/paylink_create';
+            $url = $host . '/webpayments/create';
         } else if ($payment !== null && $action === 'getPaymentStatus') {
             $host = $this->getBusinessValue($payment, 'PAYSELECTION_GATEWAY_API_URL');
             $url = $host . '/transactions/#transaction_id#';

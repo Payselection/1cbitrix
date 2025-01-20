@@ -9,8 +9,8 @@ $language = LANGUAGE_ID; ?>
                 "ERROR_MESSAGE": "An error occurred"
             },
             "ru": {
-                "PAYMENT_SUCCESS_MESSAGE": "РџРёСЃСЊРјРѕ РѕС‚РїСЂР°РІР»РµРЅРѕ СѓСЃРїРµС€РЅРѕ!",
-                "ERROR_MESSAGE": "Р’РѕР·РЅРёРєР»Р° РѕС€РёР±РєР°"
+                "PAYMENT_SUCCESS_MESSAGE": "Письмо отправлено успешно!",
+                "ERROR_MESSAGE": "Возникла ошибка"
             }
         };
         $.ajax({

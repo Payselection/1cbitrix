@@ -20,9 +20,6 @@ $MESS["SALE_PAYSELECTION_SECRET_KEY"] = "Secret key";
 $MESS["SALE_PAYSELECTION_KEY"] = "Public key";
 $MESS["SALE_PAYSELECTION_SUCCESS_URL"] = "Redirect customer to this URL upon successful transaction";
 
-$MESS["SALE_PAYSELECTION_PAYMENT_PREVIEW_FORM"] = "Preview payment form with order details";
-$MESS["SALE_PAYSELECTION_PAYMENT_SHORT_DESCRIPTION"] = "Short description payment";
-
 $MESS["SALE_PAYSELECTION_TYPE_SYSTEM"] = "Payment scheme type";
 $MESS["SALE_PAYSELECTION_TYPE_SCHEME_0"] = "One-step payment";
 $MESS["SALE_PAYSELECTION_TYPE_SCHEME_1"] = "Two-stage payment";
@@ -76,7 +73,3 @@ $MESS["SALE_PAYSELECTION_NDS_vat10"] = "VAT receipt at rate 10%";
 $MESS["SALE_PAYSELECTION_NDS_vat20"] = "VAT receipt at rate 20%";
 $MESS["SALE_PAYSELECTION_NDS_vat110"] = "VAT check at the estimated rate 10/110";
 $MESS["SALE_PAYSELECTION_NDS_vat120"]  = "VAT check at the estimated rate 20/120";
-$MESS["SALE_PAYSELECTION_NDS_vat5"] = "VAT receipt at rate 5%";
-$MESS["SALE_PAYSELECTION_NDS_vat7"] = "VAT receipt at rate 7%";
-$MESS["SALE_PAYSELECTION_NDS_vat105"] = "VAT check at the estimated rate 5/105";
-$MESS["SALE_PAYSELECTION_NDS_vat107"]  = "VAT check at the estimated rate 7/107";
