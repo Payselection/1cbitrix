@@ -42,33 +42,33 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     private const SEND_METHOD_HTTP_GET = "GET";
 
     private const VAT_VALUES = [
-        'none' => 0,        // Р‘РµР· РќР”РЎ
-        'vat0' => 0,        // РќР”РЎ 0%
-        'vat10' => 0.1,     // РќР”РЎ 10%
-        'vat20' => 0.2,     // РќР”РЎ 20%
-        'vat22' => 0.22,    // РќР”РЎ 22%
-        'vat110' => 1.1,    // РќР”РЎ 10/110
-        'vat120' => 1.2,    // РќР”РЎ 20/120
-        'vat122' => 1.22,   // РќР”РЎ 22/122
-        'vat5' => 0.05,     // РќР”РЎ 5%
-        'vat7' => 0.07,     // РќР”РЎ 7%
-        'vat105' => 1.05,   // РќР”РЎ 5/105
-        'vat107' => 1.07,   // РќР”РЎ 7/107
+        'none' => 0,        // Без НДС
+        'vat0' => 0,        // НДС 0%
+        'vat10' => 0.1,     // НДС 10%
+        'vat20' => 0.2,     // НДС 20%
+        'vat22' => 0.22,    // НДС 22%
+        'vat110' => 1.1,    // НДС 10/110
+        'vat120' => 1.2,    // НДС 20/120
+        'vat122' => 1.22,   // НДС 22/122
+        'vat5' => 0.05,     // НДС 5%
+        'vat7' => 0.07,     // НДС 7%
+        'vat105' => 1.05,   // НДС 5/105
+        'vat107' => 1.07,   // НДС 7/107
     ];
 
     private const VAT_MAP = [
-        'Р‘РµР· РќР”РЎ' => 'none',
-        'РќР”РЎ 0%' => 'vat0',
-        'РќР”РЎ 10%' => 'vat10',
-        'РќР”РЎ 20%' => 'vat20',
-        'РќР”РЎ 22%' => 'vat22',
-        'РќР”РЎ 10/110' => 'vat110',
-        'РќР”РЎ 20/120' => 'vat120',
-        'РќР”РЎ 22/122' => 'vat122',
-        'РќР”РЎ 5%' => 'vat5',
-        'РќР”РЎ 7%' => 'vat7',
-        'РќР”РЎ 5/105' => 'vat105',
-        'РќР”РЎ 7/107' => 'vat107',
+        'Без НДС' => 'none',
+        'НДС 0%' => 'vat0',
+        'НДС 10%' => 'vat10',
+        'НДС 20%' => 'vat20',
+        'НДС 22%' => 'vat22',
+        'НДС 10/110' => 'vat110',
+        'НДС 20/120' => 'vat120',
+        'НДС 22/122' => 'vat122',
+        'НДС 5%' => 'vat5',
+        'НДС 7%' => 'vat7',
+        'НДС 5/105' => 'vat105',
+        'НДС 7/107' => 'vat107',
     ];
     /**
      * @var array|array[]
@@ -105,7 +105,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
         PaySystem\Logger::addDebugInfo(__CLASS__ . ':$httpRequest: ' . $httpRequest->getQuery("send_payment_link"));
 
         if ($httpRequest->getQuery("send_payment_link") === "Y") {
-            // Р’С‹Р·РѕРІ РёР· РєРЅРѕРїРєРё "РћС‚РїСЂР°РІРёС‚СЊ СЃСЃС‹Р»РєСѓ"
+            // Вызов из кнопки "Отправить ссылку"
             $createPaymentTokenResult = $this->createPaymentToken($payment);
             if (!$createPaymentTokenResult->isSuccess()) {
                 $result->addErrors($createPaymentTokenResult->getErrors());
@@ -116,7 +116,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             $result->setPaymentUrl($createPaymentTokenData['url']);
             $this->setExtraParams($createPaymentTokenData);
         } else {
-            // Р’С‹Р·РѕРІ РёР· С„РѕСЂРјС‹ Р·Р°РєР°Р·Р° РєР»РёРµРЅС‚Р°
+            // Вызов из формы заказа клиента
             $t = $this->getTemplateParams($payment);
             PaySystem\Logger::addDebugInfo(__CLASS__ . ':getTemplateParams: ' . static::encode($t));
             $this->setExtraParams($t);
@@ -305,7 +305,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
     {
         $basketItemDeliveryId = $BasketItem->getField('DELIVERY_ID');
         $paySelectionType = $this->getBusinessValue($payment, 'PAYSELECTION_PAYMENT_NDS');
-        // РџРѕР»СѓС‡РµРЅРёРµ С‚РёРїР° РќР”РЎ РґРѕСЃС‚Р°РІРєРё
+        // Получение типа НДС доставки
         $deliveryVatType = 'none';
         if ($paySelectionType === null) {
             if (!empty($basketItemDeliveryId)) {
@@ -321,7 +321,7 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
                         if ($vatInfo) {
                             $permittedRate = $vatInfo['RATE'];
                             $errorMessage = "VAT type for the delivery with rate $permittedRate does not permitted.";
-                            // РџРѕР»СѓС‡РµРЅРёРµ С‚РёРїР° РќР”РЎ РЅР° РѕСЃРЅРѕРІРµ РЅР°РёРјРµРЅРѕРІР°РЅРёСЏ СЃС‚Р°РІРєРё
+                            // Получение типа НДС на основе наименования ставки
                             if (isset(self::VAT_MAP[$vatInfo['NAME']])) {
                                 $deliveryVatType = self::VAT_MAP[$vatInfo['NAME']];
                             } else {
@@ -424,11 +424,11 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             $vatType = $this->getVatType($BasketItem, $payment);
             $vatSum = $this->getVatSum($BasketItem, $payment);
 
-            // РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј СЃСѓРјРјСѓ РќР”РЎ РґР»СЏ С‚РёРїР°, РµСЃР»Рё РѕРЅР° РµС‰Рµ РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅР°
+            // Инициализируем сумму НДС для типа, если она еще не установлена
             if (!isset(self::$vats[$vatType])) {
                 self::$vats[$vatType] = 0;
             }
-            // Р”РѕР±Р°РІР»СЏРµРј СЃСѓРјРјСѓ РќР”РЎ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С‚РёРїР°
+            // Добавляем сумму НДС для текущего типа
             self::$vats[$vatType] += $vatSum;
 
             $positions[] = array(
@@ -449,11 +449,11 @@ class p10102022_p10102022paycode2022Handler extends PaySystem\ServiceHandler imp
             $vatTypeDelivery = (string)$this->getDeliveryVatType($order, $payment);
             $vatSumDelivery = $this->getDeliveryVatSum($order, $payment, $sumDelivery);
 
-            // РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј СЃСѓРјРјСѓ РќР”РЎ РґР»СЏ С‚РёРїР°, РµСЃР»Рё РѕРЅР° РµС‰Рµ РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅР°
+            // Инициализируем сумму НДС для типа, если она еще не установлена
             if (!isset(self::$vats[$vatTypeDelivery])) {
                 self::$vats[$vatTypeDelivery] = 0;
             }
-            // Р”РѕР±Р°РІР»СЏРµРј СЃСѓРјРјСѓ РќР”РЎ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С‚РёРїР°
+            // Добавляем сумму НДС для текущего типа
             self::$vats[$vatTypeDelivery] += $vatSumDelivery;
 
             $positions[] = array(
