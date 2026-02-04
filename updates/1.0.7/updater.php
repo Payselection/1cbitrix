@@ -24,26 +24,43 @@ if (empty($sites)) {
     throw new \RuntimeException('Нет активных сайтов для привязки почтового шаблона.');
 }
 
-// Добавляем почтовое событие
-$eventTypeResult = EventTypeTable::add([
-    'LID'         => 'ru',
-    'EVENT_NAME'  => 'PAYSELECTION_ORDER_SEND_LINK',
-    'EVENT_TYPE'  => 'email',
-    'NAME'        => 'Ссылка на оплату заказа',
-    'DESCRIPTION' => "#EMAIL_TO# - Email получателя\n#ORDER_ID# - Номер заказа\n#ORDER_SUM# - Сумма заказа",
-]);
-if (!$eventTypeResult->isSuccess()) {
-    throw new \Bitrix\Main\SystemException("Ошибка создания почтового события");
+// Добавляем почтовое событие (если ещё не существует)
+$existingRu = EventTypeTable::getList([
+    'filter' => ['EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK', 'LID' => 'ru'],
+    'select' => ['ID'],
+    'limit'  => 1,
+])->fetch();
+
+if (!$existingRu) {
+    $eventTypeResult = EventTypeTable::add([
+        'LID'         => 'ru',
+        'EVENT_NAME'  => 'PAYSELECTION_ORDER_SEND_LINK',
+        'EVENT_TYPE'  => 'email',
+        'NAME'        => 'Ссылка на оплату заказа',
+        'DESCRIPTION' => "#EMAIL_TO# - Email получателя\n#ORDER_ID# - Номер заказа\n#ORDER_SUM# - Сумма заказа",
+    ]);
+    if (!$eventTypeResult->isSuccess()) {
+        throw new \Bitrix\Main\SystemException("Ошибка создания почтового события");
+    }
 }
-$eventTypeResult = EventTypeTable::add([
-    'LID'         => 'en',
-    'EVENT_NAME'  => 'PAYSELECTION_ORDER_SEND_LINK',
-    'EVENT_TYPE'  => 'email',
-    'NAME'        => 'Link to order payment',
-    'DESCRIPTION' => "#EMAIL_TO# - Email получателя\n#ORDER_ID# - Номер заказа\n#ORDER_SUM# - Сумма заказа",
-]);
-if (!$eventTypeResult->isSuccess()) {
-    throw new \Bitrix\Main\SystemException("Ошибка создания почтового события");
+
+$existingEn = EventTypeTable::getList([
+    'filter' => ['EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK', 'LID' => 'en'],
+    'select' => ['ID'],
+    'limit'  => 1,
+])->fetch();
+
+if (!$existingEn) {
+    $eventTypeResult = EventTypeTable::add([
+        'LID'         => 'en',
+        'EVENT_NAME'  => 'PAYSELECTION_ORDER_SEND_LINK',
+        'EVENT_TYPE'  => 'email',
+        'NAME'        => 'Link to order payment',
+        'DESCRIPTION' => "#EMAIL_TO# - Email получателя\n#ORDER_ID# - Номер заказа\n#ORDER_SUM# - Сумма заказа",
+    ]);
+    if (!$eventTypeResult->isSuccess()) {
+        throw new \Bitrix\Main\SystemException("Ошибка создания почтового события");
+    }
 }
 
 // Добавляем почтовый шаблон для всех сайтов
@@ -107,27 +124,35 @@ $message = '<style>
     </tbody>
 </table>';
 foreach ($sites as $siteId) {
-    $eventMessageResult = EventMessageTable::add([
-        'ACTIVE' => 'Y',
-        'EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK',
-        'LID' => $siteId,
-        'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
-        'EMAIL_TO' => '#EMAIL_TO#',
-        'SUBJECT' => 'Ссылка на оплату заказа №#ORDER_ID#',
-        'MESSAGE' => $message,
-        'BODY_TYPE' => 'html',
-    ]);
-    if (!$eventMessageResult->isSuccess()) {
-        throw new \Bitrix\Main\SystemException("Ошибка создания шаблона письма");
-    }
-    $eventMessageId = $eventMessageResult->getId();
-    $siteBindingResult = EventMessageSiteTable::add([
-        'EVENT_MESSAGE_ID' => $eventMessageId,
-        'SITE_ID' => $siteId,
-    ]);
+    $existingMessage = EventMessageTable::getList([
+        'filter' => ['EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK', 'LID' => $siteId],
+        'select' => ['ID'],
+        'limit'  => 1,
+    ])->fetch();
 
-    if (!$siteBindingResult->isSuccess()) {
-        throw new \RuntimeException('Ошибка при привязке шаблона к сайту ' . $siteId . ': ' . implode(', ', $siteBindingResult->getErrorMessages()));
+    if (!$existingMessage) {
+        $eventMessageResult = EventMessageTable::add([
+            'ACTIVE' => 'Y',
+            'EVENT_NAME' => 'PAYSELECTION_ORDER_SEND_LINK',
+            'LID' => $siteId,
+            'EMAIL_FROM' => '#DEFAULT_EMAIL_FROM#',
+            'EMAIL_TO' => '#EMAIL_TO#',
+            'SUBJECT' => 'Ссылка на оплату заказа №#ORDER_ID#',
+            'MESSAGE' => $message,
+            'BODY_TYPE' => 'html',
+        ]);
+        if (!$eventMessageResult->isSuccess()) {
+            throw new \Bitrix\Main\SystemException("Ошибка создания шаблона письма");
+        }
+        $eventMessageId = $eventMessageResult->getId();
+        $siteBindingResult = EventMessageSiteTable::add([
+            'EVENT_MESSAGE_ID' => $eventMessageId,
+            'SITE_ID' => $siteId,
+        ]);
+
+        if (!$siteBindingResult->isSuccess()) {
+            throw new \RuntimeException('Ошибка при привязке шаблона к сайту ' . $siteId . ': ' . implode(', ', $siteBindingResult->getErrorMessages()));
+        }
     }
 }
 
